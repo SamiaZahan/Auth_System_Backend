@@ -1,0 +1,16 @@
+version: "3.3"
+
+services:
+    server:
+        build: .
+        container_name: airbringr-auth
+        ports: 
+            - 8080:8080
+        env_file: .env
+        logging:
+            driver: awslogs
+            options:
+                awslogs-region: ap-southeast-1
+                awslogs-group: airbringr-auth
+                awslogs-create-group: "true"
+                awslogs-multiline-pattern: '^time='
