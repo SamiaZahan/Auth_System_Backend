@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
@@ -13,7 +12,7 @@ type Mongo struct {
 	DBName  string
 }
 
-func (m *Mongo) Connect() error {
+func (m *Mongo) Connect() (err error) {
 	clientOptions := options.Client().ApplyURI(m.ConnURI)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -21,15 +20,18 @@ func (m *Mongo) Connect() error {
 	client, err := mongo.Connect(ctx, clientOptions)
 
 	if err != nil {
-		log.Fatal(err.Error())
-		return err
+		return
 	}
 
-	defer func() {
-		err = client.Disconnect(ctx)
-		log.Fatal(err.Error())
-	}()
-
+	MongoClient = client
 	DB = client.Database(m.DBName)
 	return nil
+}
+
+func (m *Mongo) Disconnect() (err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	err = MongoClient.Disconnect(ctx)
+	return
 }

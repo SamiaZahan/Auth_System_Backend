@@ -31,6 +31,8 @@ func main() {
 	config.New()
 	App := app.New()
 	App.Bootstrap()
+	defer func() { _ = App.Mongo.Disconnect() }()
+
 	Handler := handler.New()
 
 	// setup App

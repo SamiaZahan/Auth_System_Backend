@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"github.com/emamulandalib/airbringr-auth/config"
 	"github.com/emamulandalib/airbringr-auth/repository"
 	log "github.com/sirupsen/logrus"
@@ -11,6 +12,7 @@ func (app *App) Bootstrap() {
 		ConnURI: config.Params.MongoDbConnURI,
 		DBName:  config.Params.MongoDbName,
 	}
+	app.Mongo = &mongo
 
 	err := mongo.Connect()
 
@@ -19,7 +21,8 @@ func (app *App) Bootstrap() {
 		return
 	}
 
-	authRepo := repository.Auth{}
+	ctx := context.Background()
+	authRepo := repository.Auth{ctx}
 	err = authRepo.CreateUserIndex()
 
 	if err != nil {

@@ -10,47 +10,29 @@ import (
 	"time"
 )
 
-type Auth struct{}
+type Auth struct {
+	Ctx context.Context
+}
 
 func (a *Auth) CreateUserIndex() (err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
 	col := DB.Collection(UserCollection)
-	indexModel := mongo.IndexModel{
+	_, err = col.Indexes().CreateOne(a.Ctx, mongo.IndexModel{
 		Options: options.Index().SetUnique(true),
 		Keys:    bsonx.MDoc{"email": bsonx.Int32(-1)},
-	}
-
-	_, err = col.Indexes().CreateOne(ctx, indexModel)
-
-	if err != nil {
-		return
-	}
-
+	})
 	return
 }
 
-func (a *Auth) GetUserByEmail(email string) (user *User, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func (a *Auth) GetUserByEmail(email string) (user *UserDoc, err error) {
 	col := DB.Collection(UserCollection)
-	err = col.FindOne(ctx, bson.D{{"email", email}}).Decode(&user)
-
-	if err != nil {
-		return
-	}
-
+	err = col.FindOne(a.Ctx, bson.D{{"email", email}}).Decode(&user)
 	return
 }
 
 func (a *Auth) CreateUser(email string) (ID string, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
 	col := DB.Collection(UserCollection)
-	res, err := col.InsertOne(ctx, User{
+	res, err := col.InsertOne(a.Ctx, UserDoc{
+		ID:      primitive.NewObjectID(),
 		Email:   email,
 		Active:  false,
 		Created: time.Now(),
@@ -60,26 +42,19 @@ func (a *Auth) CreateUser(email string) (ID string, err error) {
 		return
 	}
 
-	ID = res.InsertedID.(primitive.ObjectID).String()
+	ID = res.InsertedID.(primitive.ObjectID).Hex()
 	return
 }
 
 func (a *Auth) CreateUserProfile(userID string, firstName string, lastName string) (err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
 	UserID, _ := primitive.ObjectIDFromHex(userID)
 	col := DB.Collection(UserProfileCollection)
-	_, err = col.InsertOne(ctx, UserProfile{
-		UserId:    UserID,
+	_, err = col.InsertOne(a.Ctx, UserProfileDoc{
+		ID:        primitive.NewObjectID(),
+		UserID:    UserID,
 		FirstName: firstName,
 		LastName:  lastName,
 		Created:   time.Now(),
 	})
-
-	if err != nil {
-		return
-	}
-
 	return
 }

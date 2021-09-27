@@ -11,6 +11,7 @@ var (
 
 type Config struct {
 	Port                  int    `required:"true"`
+	MainDomain            string `required:"true"`
 	MongoDbConnURI        string `required:"true"`
 	MongoDbName           string `required:"true"`
 	NotificationSvcDomain string `required:"true"`
