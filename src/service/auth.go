@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+
 	"github.com/emamulandalib/airbringr-auth/config"
 	"github.com/emamulandalib/airbringr-auth/dto"
 	"github.com/emamulandalib/airbringr-auth/repository"
@@ -17,7 +18,7 @@ type Auth struct{}
 func (a *Auth) Signup(input dto.SignupInput) (err error) {
 	genericSignupFailureMsg := errors.New("Signup failed for some technical reason.")
 	ctx := context.Background()
-	authRepo := repository.Auth{ctx}
+	authRepo := repository.Auth{Ctx: ctx}
 
 	// try to get existing user
 	existingUser, err := authRepo.GetUserByEmail(input.Email)
@@ -34,8 +35,8 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 	createVerificationLink := func(sessCtx mongo.SessionContext) (i interface{}, err error) {
 		var userID string
 		var verificationID string
-		AuthRpo := repository.Auth{sessCtx}
-		VerificationRepo := repository.Verification{sessCtx}
+		AuthRpo := repository.Auth{Ctx: sessCtx}
+		VerificationRepo := repository.Verification{Ctx: sessCtx}
 
 		if userID, err = AuthRpo.CreateUser(input.Email); err != nil {
 			return
