@@ -33,6 +33,7 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 	otp := GenerateRandNum()
 	createVerificationLink := func(sessCtx mongo.SessionContext) (i interface{}, err error) {
 		var userID string
+		var verificationID string
 		AuthRpo := repository.Auth{sessCtx}
 		VerificationRepo := repository.Verification{sessCtx}
 
@@ -42,11 +43,11 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 		if err = AuthRpo.CreateUserProfile(userID, input.FirstName, input.LastName); err != nil {
 			return
 		}
-		if err = VerificationRepo.Create(input.Email, otp, userID); err != nil {
+		if verificationID, err = VerificationRepo.Create(input.Email, otp, userID); err != nil {
 			return
 		}
 
-		err = a.SendEmail(input.Email, otp)
+		err = a.SendEmail(input.Email, otp, verificationID)
 		return
 	}
 
@@ -66,9 +67,9 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 	return
 }
 
-func (a *Auth) SendEmail(email string, otp int) error {
+func (a *Auth) SendEmail(email string, otp int, verificationID string) error {
 	emailSvcURI := fmt.Sprintf("%s/v1/send-email", config.Params.NotificationSvcDomain)
-	verificationLink := fmt.Sprintf("%s/verification/?otp=%s", config.Params.MainDomain, otp)
+	verificationLink := fmt.Sprintf("%s/verification/?otp=%d&auth=%s", config.Params.MainDomain, otp, verificationID)
 
 	code, _, errs := fiber.
 		Post(emailSvcURI).
@@ -79,7 +80,7 @@ func (a *Auth) SendEmail(email string, otp int) error {
 			"to":            email,
 			"from":          "contact@airbringr.com",
 			"message":       "Please click the link to verify your account.",
-			"subject":       "AirBringr Signup VerificationDoc",
+			"subject":       "AirBringr Signup Verification",
 			"template_code": "signup_verification",
 		}).
 		String()
