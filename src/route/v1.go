@@ -9,4 +9,5 @@ func V1(server *fiber.App, handler *handler.Handler) {
 	v1 := server.Group("/v1")
 	v1.Get("/", handler.Home)
 	v1.Post("/signup", handler.Signup)
+	v1.Post("/email-verify", handler.EmailVerification)
 }

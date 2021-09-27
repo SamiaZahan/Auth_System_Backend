@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"errors"
-
 	"github.com/emamulandalib/airbringr-auth/dto"
 	"github.com/emamulandalib/airbringr-auth/response"
 	"github.com/emamulandalib/airbringr-auth/service"
@@ -16,7 +14,7 @@ func (h *Handler) EmailVerification(c *fiber.Ctx) (err error) {
 			Status(fiber.StatusBadRequest).
 			JSON(response.Payload{
 				Message: response.BodyParseFailedErrorMsg,
-				Errors:  errors.New(response.BodyParseFailedErrorMsg),
+				Errors:  err,
 			})
 	}
 
@@ -34,7 +32,7 @@ func (h *Handler) EmailVerification(c *fiber.Ctx) (err error) {
 		return c.
 			Status(fiber.StatusBadRequest).
 			JSON(response.Payload{
-				Message: response.ValidationFailedMsg,
+				Message: err.Error(),
 				Errors:  err,
 				Data:    dto.EmailVerificationOutput{Verified: false},
 			})
@@ -42,6 +40,6 @@ func (h *Handler) EmailVerification(c *fiber.Ctx) (err error) {
 
 	return c.JSON(response.Payload{
 		Message: "Your account activated successfully. Please try to login now.",
-		Data:    dto.EmailVerificationOutput{Verified: false},
+		Data:    dto.EmailVerificationOutput{Verified: true},
 	})
 }

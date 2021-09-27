@@ -19,7 +19,7 @@ func (a *Auth) EmailVerification(input dto.EmailVerificationInput) (err error) {
 	var vDoc repository.VerificationDoc
 	if vDoc, err = vRepo.GetByIDAndCode(input.Auth, input.OTP); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return errors.New("Verification code is wrong.")
+			return errors.New("Verification code does not exist.")
 		}
 		log.Error(err.Error())
 		return genericErrMsg
@@ -30,5 +30,7 @@ func (a *Auth) EmailVerification(input dto.EmailVerificationInput) (err error) {
 		log.Error(err.Error())
 		return genericErrMsg
 	}
+
+	_ = vRepo.DeleteByID(input.Auth)
 	return
 }
