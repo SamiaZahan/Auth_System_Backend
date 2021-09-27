@@ -2,12 +2,13 @@ package repository
 
 import (
 	"context"
+	"time"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/bsonx"
-	"time"
 )
 
 type Auth struct {
@@ -25,7 +26,7 @@ func (a *Auth) CreateUserIndex() (err error) {
 
 func (a *Auth) GetUserByEmail(email string) (user *UserDoc, err error) {
 	col := DB.Collection(UserCollection)
-	err = col.FindOne(a.Ctx, bson.D{{"email", email}}).Decode(&user)
+	err = col.FindOne(a.Ctx, bson.D{{Key: "email", Value: email}}).Decode(&user)
 	return
 }
 
@@ -56,5 +57,16 @@ func (a *Auth) CreateUserProfile(userID string, firstName string, lastName strin
 		LastName:  lastName,
 		Created:   time.Now(),
 	})
+	return
+}
+
+func (a *Auth) ActivateUserByID(userID string) (err error) {
+	UserID, _ := primitive.ObjectIDFromHex(userID)
+	col := DB.Collection(UserCollection)
+	_, err = col.UpdateOne(
+		a.Ctx,
+		bson.M{"_id": bson.M{"$eq": UserID}},
+		bson.M{"$set": bson.M{"active": true}},
+	)
 	return
 }

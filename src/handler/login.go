@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+
 	"github.com/emamulandalib/airbringr-auth/dto"
 	"github.com/emamulandalib/airbringr-auth/response"
 	"github.com/gofiber/fiber/v2"
@@ -9,7 +10,6 @@ import (
 
 func (h *Handler) Login(c *fiber.Ctx) error {
 	loginInput := new(dto.LoginInput)
-
 	if err := c.BodyParser(loginInput); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Payload{
 			Message: response.BodyParseFailedErrorMsg,
@@ -18,7 +18,6 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 	}
 
 	err := loginInput.Validate()
-
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Payload{
 			Message: response.ValidationFailedMsg,

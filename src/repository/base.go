@@ -1,9 +1,10 @@
 package repository
 
 import (
+	"time"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"time"
 )
 
 var (
@@ -38,4 +39,5 @@ type VerificationDoc struct {
 	UserID        primitive.ObjectID `bson:"user_id"`
 	EmailOrMobile string             `bson:"email_or_mobile"`
 	Code          int                `bson:"code"`
+	Created       time.Time          `bson:"created"`
 }
