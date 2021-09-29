@@ -2,6 +2,8 @@ package service
 
 import "math/rand"
 
+type Auth struct{}
+
 func GenerateRandNum() int {
 	min := 1000
 	max := 9999

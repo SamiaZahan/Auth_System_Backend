@@ -13,8 +13,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type Auth struct{}
-
 func (a *Auth) Signup(input dto.SignupInput) (err error) {
 	genericSignupFailureMsg := errors.New("Signup failed for some technical reason.")
 	ctx := context.Background()
