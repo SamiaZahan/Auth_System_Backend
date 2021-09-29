@@ -23,3 +23,17 @@ func (input VerifySmsOtpInput) Validate() error {
 		validation.Field(&input.OTP, validation.Required),
 	)
 }
+
+type VerifyMobileInput struct {
+	Auth   string `json:"auth"`
+	Mobile string `json:"mobile"`
+	OTP    int    `json:"otp"`
+}
+
+func (input VerifyMobileInput) Validate() error {
+	return validation.ValidateStruct(&input,
+		validation.Field(&input.Auth, validation.Required),
+		validation.Field(&input.Mobile, validation.Required),
+		validation.Field(&input.OTP, validation.Required),
+	)
+}

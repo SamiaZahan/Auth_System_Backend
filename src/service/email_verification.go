@@ -31,6 +31,5 @@ func (a *Auth) EmailVerification(input dto.EmailVerificationInput) (err error) {
 		return genericErrMsg
 	}
 
-	_ = vRepo.DeleteByID(input.Auth)
 	return
 }

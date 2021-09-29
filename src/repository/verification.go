@@ -27,6 +27,17 @@ func (v *Verification) Create(emailOrMobile string, code int, userId string) (ID
 	return
 }
 
+func (v *Verification) GetByID(ID string) (vDoc VerificationDoc, err error) {
+	vID, _ := primitive.ObjectIDFromHex(ID)
+	col := DB.Collection(VerificationCollection)
+	err = col.
+		FindOne(
+			v.Ctx,
+			bson.M{"_id": bson.M{"$eq": vID}}).
+		Decode(&vDoc)
+	return
+}
+
 func (v *Verification) GetByIDAndCode(ID string, code int) (vDoc VerificationDoc, err error) {
 	vID, _ := primitive.ObjectIDFromHex(ID)
 	col := DB.Collection(VerificationCollection)

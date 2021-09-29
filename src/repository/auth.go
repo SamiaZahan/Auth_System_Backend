@@ -70,3 +70,14 @@ func (a *Auth) ActivateUserByID(userID string) (err error) {
 	)
 	return
 }
+
+func (a *Auth) SetUserMobileByID(userID string, mobile string) (err error) {
+	UserID, _ := primitive.ObjectIDFromHex(userID)
+	col := DB.Collection(UserCollection)
+	_, err = col.UpdateOne(
+		a.Ctx,
+		bson.M{"_id": bson.M{"$eq": UserID}},
+		bson.M{"$set": bson.M{"mobile": mobile}},
+	)
+	return
+}
