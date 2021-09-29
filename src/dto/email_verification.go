@@ -15,7 +15,3 @@ func (input EmailVerificationInput) Validate() error {
 		validation.Field(&input.OTP, validation.Required),
 	)
 }
-
-type EmailVerificationOutput struct {
-	Verified bool `json:"verified"`
-}

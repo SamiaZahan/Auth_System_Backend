@@ -41,6 +41,19 @@ func (v *Verification) GetByIDAndCode(ID string, code int) (vDoc VerificationDoc
 	return
 }
 
+func (v *Verification) GetByEmailOrMobileAndCode(emailOrMobile string, code int) (vDoc VerificationDoc, err error) {
+	col := DB.Collection(VerificationCollection)
+	err = col.
+		FindOne(
+			v.Ctx,
+			bson.M{
+				"email_or_mobile": bson.M{"$eq": emailOrMobile},
+				"code":            bson.M{"$eq": code},
+			}).
+		Decode(&vDoc)
+	return
+}
+
 func (v *Verification) DeleteByID(ID string) (err error) {
 	vID, _ := primitive.ObjectIDFromHex(ID)
 	col := DB.Collection(VerificationCollection)

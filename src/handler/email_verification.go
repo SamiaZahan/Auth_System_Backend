@@ -34,12 +34,12 @@ func (h *Handler) EmailVerification(c *fiber.Ctx) (err error) {
 			JSON(response.Payload{
 				Message: err.Error(),
 				Errors:  err,
-				Data:    dto.EmailVerificationOutput{Verified: false},
+				Data:    dto.VerificationOutput{Verified: false},
 			})
 	}
 
 	return c.JSON(response.Payload{
 		Message: "Your account activated successfully. Please try to login now.",
-		Data:    dto.EmailVerificationOutput{Verified: true},
+		Data:    dto.VerificationOutput{Verified: true},
 	})
 }

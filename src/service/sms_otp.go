@@ -16,7 +16,7 @@ import (
 type SmsOtp struct{}
 
 func (s *SmsOtp) Send(input dto.SendSmsOtpInput) (err error) {
-	genericSignupFailureMsg := errors.New("OTP send failed")
+	genericFailureMsg := errors.New("OTP send failed")
 	otp := GenerateRandNum()
 	smsSvcURI := fmt.Sprintf("%s/v1/send-sms", config.Params.NotificationSvcDomain)
 
@@ -24,7 +24,7 @@ func (s *SmsOtp) Send(input dto.SendSmsOtpInput) (err error) {
 	var sess mongo.Session
 	if sess, err = repository.MongoClient.StartSession(); err != nil {
 		log.Error(err.Error())
-		return genericSignupFailureMsg
+		return genericFailureMsg
 	}
 	defer sess.EndSession(ctx)
 
@@ -50,8 +50,23 @@ func (s *SmsOtp) Send(input dto.SendSmsOtpInput) (err error) {
 
 	if _, err = sess.WithTransaction(ctx, tryToSend); err != nil {
 		log.Error(err.Error())
-		return genericSignupFailureMsg
+		return genericFailureMsg
 	}
 
+	return
+}
+
+func (s *SmsOtp) Verify(input dto.VerifySmsOtpInput) (err error) {
+	ctx := context.Background()
+	genericFailureMsg := errors.New("OTP verification failed")
+	vRepo := repository.Verification{Ctx: ctx}
+	var vDoc repository.VerificationDoc
+
+	if vDoc, err = vRepo.GetByEmailOrMobileAndCode(input.Mobile, input.OTP); err != nil {
+		log.Error(err.Error())
+		return genericFailureMsg
+	}
+
+	_ = vRepo.DeleteByID(vDoc.ID.Hex())
 	return
 }

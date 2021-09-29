@@ -10,7 +10,7 @@ import (
 )
 
 func (receiver *Handler) VerifySmsOtp(c *fiber.Ctx) (err error) {
-	input := new(dto.SendSmsOtpInput)
+	input := new(dto.VerifySmsOtpInput)
 
 	if err = c.BodyParser(input); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Payload{
@@ -27,14 +27,16 @@ func (receiver *Handler) VerifySmsOtp(c *fiber.Ctx) (err error) {
 	}
 
 	svc := service.SmsOtp{}
-	if err = svc.Send(*input); err != nil {
+	if err = svc.Verify(*input); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Payload{
 			Message: err.Error(),
 			Errors:  err,
+			Data:    dto.VerificationOutput{Verified: false},
 		})
 	}
 
 	return c.JSON(response.Payload{
-		Message: "OTP has been sent successfully.",
+		Message: "OTP verified.",
+		Data:    dto.VerificationOutput{Verified: true},
 	})
 }
