@@ -2,8 +2,9 @@ package repository
 
 import (
 	"context"
-	"go.mongodb.org/mongo-driver/bson"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -40,7 +41,7 @@ func (v *Verification) GetByIDAndCode(ID string, code int) (vDoc VerificationDoc
 	return
 }
 
-func (v Verification) DeleteByID(ID string) (err error) {
+func (v *Verification) DeleteByID(ID string) (err error) {
 	vID, _ := primitive.ObjectIDFromHex(ID)
 	col := DB.Collection(VerificationCollection)
 	_, err = col.DeleteOne(v.Ctx, bson.M{"_id": bson.M{"$eq": vID}})

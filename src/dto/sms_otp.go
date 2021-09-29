@@ -11,3 +11,7 @@ func (input SendSmsOtpInput) Validate() error {
 		validation.Field(&input.Mobile, validation.Required),
 	)
 }
+
+type VerifySmsOtpInput struct {
+	
+}

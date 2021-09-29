@@ -50,15 +50,14 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 		return
 	}
 
-	sess, err := repository.MongoClient.StartSession()
-	if err != nil {
+	var sess mongo.Session
+	if sess, err = repository.MongoClient.StartSession(); err != nil {
 		log.Error(err.Error())
 		return genericSignupFailureMsg
 	}
 	defer sess.EndSession(ctx)
 
-	_, err = sess.WithTransaction(ctx, createVerificationLink)
-	if err != nil {
+	if _, err = sess.WithTransaction(ctx, createVerificationLink); err != nil {
 		log.Error(err.Error())
 		return genericSignupFailureMsg
 	}
