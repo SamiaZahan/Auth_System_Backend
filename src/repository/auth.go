@@ -24,6 +24,20 @@ func (a *Auth) CreateUserIndex() (err error) {
 	return
 }
 
+func (a *Auth) GetUserByID(ID string) (user *UserDoc, err error) {
+	UserID, _ := primitive.ObjectIDFromHex(ID)
+	col := DB.Collection(UserCollection)
+	err = col.FindOne(a.Ctx, bson.M{"_id": bson.M{"$eq": UserID}}).Decode(&user)
+	return
+}
+
+func (a *Auth) GetUserProfileByID(ID string) (user *UserProfileDoc, err error) {
+	UserID, _ := primitive.ObjectIDFromHex(ID)
+	col := DB.Collection(UserProfileCollection)
+	err = col.FindOne(a.Ctx, bson.M{"user_id": bson.M{"$eq": UserID}}).Decode(&user)
+	return
+}
+
 func (a *Auth) GetUserByEmail(email string) (user *UserDoc, err error) {
 	col := DB.Collection(UserCollection)
 	err = col.FindOne(a.Ctx, bson.D{{Key: "email", Value: email}}).Decode(&user)

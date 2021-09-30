@@ -56,6 +56,31 @@ func (s *SmsOtp) Send(input dto.SendSmsOtpInput) (err error) {
 	return
 }
 
+func (s *SmsOtp) MobileVerificationOtp(input dto.SendSmsOtpInput) (err error) {
+	if s.ExisitingMobile(input.Mobile) {
+		return errors.New("mobile number already taken")
+	}
+
+	err = s.Send(input)
+	return
+}
+
+func (s *SmsOtp) ExisitingMobile(phone string) (exists bool) {
+	if code, _, errs := fiber.
+		Post(fmt.Sprintf("%s/helper/exist-phone", config.Params.AirBringrDomain)).
+		JSON(fiber.Map{
+			"phone": phone,
+		}).
+		String(); code != fiber.StatusOK {
+		log.Error(errs)
+		exists = true
+		return
+	}
+
+	exists = false
+	return
+}
+
 func (s *SmsOtp) Verify(input dto.VerifySmsOtpInput) (err error) {
 	ctx := context.Background()
 	genericFailureMsg := errors.New("OTP verification failed")
@@ -98,6 +123,32 @@ func (s *SmsOtp) VerifyAndRegisterMobileNumber(input dto.VerifyMobileInput) (err
 			return
 		}
 
+		// register user into legacy system
+		var userDoc *repository.UserDoc
+		var userProfileDoc *repository.UserProfileDoc
+
+		if userDoc, err = aRepo.GetUserByID(userID); err != nil {
+			return
+		}
+
+		if userProfileDoc, err = aRepo.GetUserProfileByID(userID); err != nil {
+			return
+		}
+
+		if code, body, errs := fiber.
+			Post(fmt.Sprintf("%s/helper/register", config.Params.AirBringrDomain)).
+			JSON(fiber.Map{
+				"name":     fmt.Sprintf("%s %s", userProfileDoc.FirstName, userProfileDoc.LastName),
+				"email":    userDoc.Email,
+				"phone":    userDoc.Mobile,
+				"password": "electronics cleaner",
+			}).
+			String(); code != fiber.StatusOK {
+			log.Error(body)
+			log.Error(errs)
+			return nil, genericFailureMsg
+		}
+
 		if err = VRepo.DeleteByID(input.Auth); err != nil {
 			return
 		}
@@ -106,7 +157,6 @@ func (s *SmsOtp) VerifyAndRegisterMobileNumber(input dto.VerifyMobileInput) (err
 			return
 		}
 
-		// register user into legacy system
 		return
 	}
 

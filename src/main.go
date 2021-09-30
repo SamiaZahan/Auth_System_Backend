@@ -13,6 +13,7 @@ import (
 	"github.com/emamulandalib/airbringr-auth/handler"
 	"github.com/emamulandalib/airbringr-auth/route"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
@@ -43,6 +44,9 @@ func main() {
 	// setup middlewares
 	server.Use(requestid.New())
 	server.Use(recover.New())
+	server.Use(cors.New(cors.Config{
+		AllowOrigins: "http://localhost:3000",
+	}))
 
 	server.Use(logger.New(logger.Config{
 		Format:   "[${time}] ${status} ${locals:requestid} - ${latency} ${method} ${path}\n",
