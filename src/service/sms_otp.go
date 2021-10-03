@@ -15,7 +15,7 @@ import (
 
 type SmsOtp struct{}
 
-func (s *SmsOtp) Send(input dto.SendSmsOtpInput) (err error) {
+func (s *SmsOtp) Send(input dto.SendSmsOtpInput, donotCheckExisting bool) (err error) {
 	genericFailureMsg := errors.New("OTP send failed")
 	ctx := context.Background()
 	aRepo := repository.Auth{Ctx: ctx}
@@ -24,8 +24,10 @@ func (s *SmsOtp) Send(input dto.SendSmsOtpInput) (err error) {
 		return genericFailureMsg
 	}
 
-	if !ExisitingMobile(input.Mobile) {
-		return errors.New("no user found with this mobile. Please signup")
+	if !donotCheckExisting {
+		if !ExisitingMobile(input.Mobile) {
+			return errors.New("no user found with this mobile. Please signup")
+		}
 	}
 
 	otp := GenerateRandNum()
@@ -71,7 +73,7 @@ func (s *SmsOtp) MobileVerificationOtp(input dto.SendSmsOtpInput) (err error) {
 		return errors.New("mobile number already taken")
 	}
 
-	err = s.Send(input)
+	err = s.Send(input, true)
 	return
 }
 

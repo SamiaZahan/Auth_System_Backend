@@ -17,5 +17,5 @@ func V1(server *fiber.App, handler *handler.Handler) {
 	
 	v1.Post("/send-sms-otp", handler.SendSmsOtp)
 	v1.Post("/send-email-otp", handler.SendEmailOTP)
-	v1.Post("/verify-sms-otp", handler.VerifyOtp)
+	v1.Post("/verify-otp", handler.VerifyOtp)
 }
