@@ -61,7 +61,23 @@ func main() {
 			return c.
 				Status(fiber.StatusTooManyRequests).
 				JSON(response.Payload{
-					Message: "Too many requests. Please try again after 1 hour or you can try to login using email. Please input your email now.",
+					Message: "Too many requests. Please try again after 1 hour or you can try to login using email.",
+				})
+		},
+	}))
+
+	// rete limit for SEND Email OTP
+	server.Use(limiter.New(limiter.Config{
+		Next: func(c *fiber.Ctx) bool {
+			return c.Path() != "/v1/send-email-otp"
+		},
+		Max:        3,
+		Expiration: time.Minute * 60,
+		LimitReached: func(c *fiber.Ctx) error {
+			return c.
+				Status(fiber.StatusTooManyRequests).
+				JSON(response.Payload{
+					Message: "Too many requests. Please try again after 1 hour or you can try to login using mobile number",
 				})
 		},
 	}))
