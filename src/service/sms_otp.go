@@ -17,18 +17,21 @@ type SmsOtp struct{}
 
 func (s *SmsOtp) Send(input dto.SendSmsOtpInput) (err error) {
 	genericFailureMsg := errors.New("OTP send failed")
+	ctx := context.Background()
+	aRepo := repository.Auth{Ctx: ctx}
+
+	if _, err = aRepo.GetUserByMobile(input.Mobile); err != nil && err != mongo.ErrNoDocuments {
+		return genericFailureMsg
+	}
+
+	if !ExisitingMobile(input.Mobile) {
+		return errors.New("no user found with this mobile. Please signup")
+	}
+
 	otp := GenerateRandNum()
 	smsSvcURI := fmt.Sprintf("%s/v1/send-sms", config.Params.NotificationSvcDomain)
 
-	ctx := context.Background()
-	var sess mongo.Session
-	if sess, err = repository.MongoClient.StartSession(); err != nil {
-		log.Error(err.Error())
-		return genericFailureMsg
-	}
-	defer sess.EndSession(ctx)
-
-	tryToSend := func(sessCtx mongo.SessionContext) (i interface{}, err error) {
+	cb := func(sessCtx mongo.SessionContext) (i interface{}, err error) {
 		vRepo := repository.Verification{Ctx: sessCtx}
 		if _, err = vRepo.Create(input.Mobile, otp, ""); err != nil {
 			return
@@ -48,7 +51,14 @@ func (s *SmsOtp) Send(input dto.SendSmsOtpInput) (err error) {
 		return
 	}
 
-	if _, err = sess.WithTransaction(ctx, tryToSend); err != nil {
+	var sess mongo.Session
+	if sess, err = repository.MongoClient.StartSession(); err != nil {
+		log.Error(err.Error())
+		return genericFailureMsg
+	}
+	defer sess.EndSession(ctx)
+
+	if _, err = sess.WithTransaction(ctx, cb); err != nil {
 		log.Error(err.Error())
 		return genericFailureMsg
 	}
@@ -57,27 +67,11 @@ func (s *SmsOtp) Send(input dto.SendSmsOtpInput) (err error) {
 }
 
 func (s *SmsOtp) MobileVerificationOtp(input dto.SendSmsOtpInput) (err error) {
-	if s.ExisitingMobile(input.Mobile) {
+	if ExisitingMobile(input.Mobile) {
 		return errors.New("mobile number already taken")
 	}
 
 	err = s.Send(input)
-	return
-}
-
-func (s *SmsOtp) ExisitingMobile(phone string) (exists bool) {
-	if code, _, errs := fiber.
-		Post(fmt.Sprintf("%s/helper/exist-phone", config.Params.AirBringrDomain)).
-		JSON(fiber.Map{
-			"phone": phone,
-		}).
-		String(); code != fiber.StatusOK {
-		log.Error(errs)
-		exists = true
-		return
-	}
-
-	exists = false
 	return
 }
 

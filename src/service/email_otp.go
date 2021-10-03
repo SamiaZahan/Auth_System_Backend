@@ -17,16 +17,19 @@ type EmailOtp struct{}
 
 func (e *EmailOtp) Send(input dto.EmailOtpInput) (err error) {
 	genericFailureMsg := errors.New("OTP send failed")
-	otp := GenerateRandNum()
-	emailSvcURI := fmt.Sprintf("%s/v1/send-email", config.Params.NotificationSvcDomain)
-
 	ctx := context.Background()
-	var sess mongo.Session
-	if sess, err = repository.MongoClient.StartSession(); err != nil {
-		log.Error(err.Error())
+	aRepo := repository.Auth{Ctx: ctx}
+
+	if _, err = aRepo.GetUserByEmail(input.Email); err != nil && err != mongo.ErrNoDocuments {
 		return genericFailureMsg
 	}
-	defer sess.EndSession(ctx)
+
+	if !ExistingEmail(input.Email) {
+		return errors.New("no user found with this email. Please signup")
+	}
+
+	otp := GenerateRandNum()
+	emailSvcURI := fmt.Sprintf("%s/v1/send-email", config.Params.NotificationSvcDomain)
 
 	cb := func(sessCtx mongo.SessionContext) (d interface{}, err error) {
 		vRepo := repository.Verification{Ctx: sessCtx}
@@ -52,6 +55,13 @@ func (e *EmailOtp) Send(input dto.EmailOtpInput) (err error) {
 		}
 		return
 	}
+
+	var sess mongo.Session
+	if sess, err = repository.MongoClient.StartSession(); err != nil {
+		log.Error(err.Error())
+		return genericFailureMsg
+	}
+	defer sess.EndSession(ctx)
 
 	if _, err = sess.WithTransaction(ctx, cb); err != nil {
 		log.Error(err.Error())

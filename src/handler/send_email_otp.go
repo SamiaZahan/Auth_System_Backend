@@ -32,7 +32,7 @@ func (h *Handler) SendEmailOTP(c *fiber.Ctx) (err error) {
 		return c.
 			Status(fiber.StatusBadRequest).
 			JSON(response.Payload{
-				Message: response.ValidationFailedMsg,
+				Message: err.Error(),
 				Errors:  err,
 			})
 	}

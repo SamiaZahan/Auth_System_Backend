@@ -28,7 +28,7 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 		return errors.New("An user with this email is already exist.")
 	}
 
-	if a.ExistingEmail(input.Email) {
+	if ExistingEmail(input.Email) {
 		return errors.New("An user with this email is already exist.")
 	}
 
@@ -69,27 +69,11 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 	return
 }
 
-func (a *Auth) ExistingEmail(email string) (exists bool) {
-	if code, _, errs := fiber.
-		Post(fmt.Sprintf("%s/helper/exist-email", config.Params.AirBringrDomain)).
-		JSON(fiber.Map{
-			"email": email,
-		}).
-		String(); code != fiber.StatusOK {
-		log.Error(errs)
-		exists = true
-		return
-	}
-
-	exists = false
-	return
-}
-
 func (a *Auth) SendEmail(email string, otp int, verificationID string) error {
 	emailSvcURI := fmt.Sprintf("%s/v1/send-email", config.Params.NotificationSvcDomain)
 	verificationLink := fmt.Sprintf("%s/verification/?otp=%d&auth=%s", config.Params.ServiceFrontend, otp, verificationID)
 
-	code, _, errs := fiber.
+	if code, _, errs := fiber.
 		Post(emailSvcURI).
 		JSON(fiber.Map{
 			"data": fiber.Map{
@@ -101,9 +85,7 @@ func (a *Auth) SendEmail(email string, otp int, verificationID string) error {
 			"subject":       "AirBringr Signup Verification",
 			"template_code": "signup_verification",
 		}).
-		String()
-
-	if code != fiber.StatusOK {
+		String(); code != fiber.StatusOK {
 		log.Error(errs)
 		return errors.New("Email send failed.")
 	}
