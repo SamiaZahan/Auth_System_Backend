@@ -11,9 +11,11 @@ import (
 	"github.com/emamulandalib/airbringr-auth/app"
 	"github.com/emamulandalib/airbringr-auth/config"
 	"github.com/emamulandalib/airbringr-auth/handler"
+	"github.com/emamulandalib/airbringr-auth/response"
 	"github.com/emamulandalib/airbringr-auth/route"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
@@ -46,6 +48,22 @@ func main() {
 	server.Use(recover.New())
 	server.Use(cors.New(cors.Config{
 		AllowOrigins: config.Params.CORSPermitted,
+	}))
+
+	// rete limit for SEND SMS OTP
+	server.Use(limiter.New(limiter.Config{
+		Next: func(c *fiber.Ctx) bool {
+			return c.Path() != "/v1/send-sms-otp"
+		},
+		Max:        2,
+		Expiration: time.Minute * 60,
+		LimitReached: func(c *fiber.Ctx) error {
+			return c.
+				Status(fiber.StatusTooManyRequests).
+				JSON(response.Payload{
+					Message: "Too many requests. Please try again after 1 hour",
+				})
+		},
 	}))
 
 	server.Use(logger.New(logger.Config{
