@@ -16,6 +16,7 @@ type Config struct {
 	MongoDbName           string `required:"true"`
 	NotificationSvcDomain string `required:"true"`
 	AirBringrDomain       string `required:"true"`
+	CORSPermitted         string `required:"true"`
 }
 
 func New() {

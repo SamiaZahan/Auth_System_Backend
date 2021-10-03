@@ -45,7 +45,7 @@ func main() {
 	server.Use(requestid.New())
 	server.Use(recover.New())
 	server.Use(cors.New(cors.Config{
-		AllowOrigins: "http://localhost:3000, https://glistening-sack.surge.sh",
+		AllowOrigins: config.Params.CORSPermitted,
 	}))
 
 	server.Use(logger.New(logger.Config{
