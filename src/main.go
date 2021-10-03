@@ -61,7 +61,7 @@ func main() {
 			return c.
 				Status(fiber.StatusTooManyRequests).
 				JSON(response.Payload{
-					Message: "Too many requests. Please try again after 1 hour",
+					Message: "Too many requests. Please try again after 1 hour or you can try to login using email. Please input your email now.",
 				})
 		},
 	}))
