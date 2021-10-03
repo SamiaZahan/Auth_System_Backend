@@ -9,8 +9,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func (receiver *Handler) VerifySmsOtp(c *fiber.Ctx) (err error) {
-	input := new(dto.VerifySmsOtpInput)
+func (receiver *Handler) VerifyOtp(c *fiber.Ctx) (err error) {
+	input := new(dto.VerifyOtpInput)
 
 	if err = c.BodyParser(input); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Payload{

@@ -13,6 +13,6 @@ func V1(server *fiber.App, handler *handler.Handler) {
 	v1.Post("/send-mobile-verification-otp", handler.MobileVerificationOTP)
 	v1.Post("/verify-mobile", handler.VerifyMobile)
 	v1.Post("/send-sms-otp", handler.SendSmsOtp)
-	v1.Post("/verify-sms-otp", handler.VerifySmsOtp)
+	v1.Post("/verify-sms-otp", handler.VerifyOtp)
 	v1.Post("/send-email-otp", handler.SendEmailOTP)
 }

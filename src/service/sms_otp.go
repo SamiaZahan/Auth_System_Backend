@@ -81,13 +81,13 @@ func (s *SmsOtp) ExisitingMobile(phone string) (exists bool) {
 	return
 }
 
-func (s *SmsOtp) Verify(input dto.VerifySmsOtpInput) (err error) {
+func (s *SmsOtp) Verify(input dto.VerifyOtpInput) (err error) {
 	ctx := context.Background()
 	genericFailureMsg := errors.New("OTP verification failed")
 	vRepo := repository.Verification{Ctx: ctx}
 	var vDoc repository.VerificationDoc
 
-	if vDoc, err = vRepo.GetByEmailOrMobileAndCode(input.Mobile, input.OTP); err != nil {
+	if vDoc, err = vRepo.GetByEmailOrMobileAndCode(input.EmailOrMobile, input.OTP); err != nil {
 		log.Error(err.Error())
 		return genericFailureMsg
 	}
