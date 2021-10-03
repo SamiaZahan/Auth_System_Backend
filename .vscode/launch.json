@@ -10,7 +10,15 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/src",
-            "envFile": "${workspaceFolder}/.env"
+            "env": {
+                "AUTH_PORT": 8081,
+                "AUTH_MONGODBCONNURI": "mongodb+srv://admin:8l4Hpg3i0nGjbdTD@airbringr.kuyel.mongodb.net",
+                "AUTH_MONGODBNAME": "airbringr",
+                "AUTH_NOTIFICATIONSVCDOMAIN": "http://notification.airbringr.private",
+                "AUTH_SERVICEFRONTEND": "http://auth.airbringr.dev",
+                "AUTH_AIRBRINGRDOMAIN": "https://airbringr.dev",
+                "AUTH_CORSPERMITTED": "http://localhost:3000,https://auth.airbringr.dev",
+            }
         }
     ]
 }
