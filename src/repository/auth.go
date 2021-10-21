@@ -91,6 +91,16 @@ func (a *Auth) ActivateUserByID(userID string) (err error) {
 	return
 }
 
+func (a *Auth) ActivateUserByEmail(email string) (err error) {
+	col := DB.Collection(UserCollection)
+	_, err = col.UpdateOne(
+		a.Ctx,
+		bson.M{"email": bson.M{"$eq": email}},
+		bson.M{"$set": bson.M{"active": true}},
+	)
+	return
+}
+
 func (a *Auth) SetUserMobileByID(userID string, mobile string) (err error) {
 	UserID, _ := primitive.ObjectIDFromHex(userID)
 	col := DB.Collection(UserCollection)
