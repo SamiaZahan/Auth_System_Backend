@@ -18,6 +18,7 @@
                 "AUTH_SERVICEFRONTEND": "http://auth.airbringr.dev",
                 "AUTH_AIRBRINGRDOMAIN": "https://airbringr.dev",
                 "AUTH_CORSPERMITTED": "http://localhost:3000,https://auth.airbringr.dev",
+                "AUTH_MICROAPITOKEN": "YjUzZTEyYmUtYjI1Ny00ODNiLWFmZTUtNjA5NWU3Yjc5MjE5",
             }
         }
     ]

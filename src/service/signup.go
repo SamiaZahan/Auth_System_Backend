@@ -45,7 +45,6 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 
 	createVerificationLink := func(sessCtx mongo.SessionContext) (i interface{}, err error) {
 		var userID string
-		var verificationID string
 		AuthRpo := repository.Auth{Ctx: sessCtx}
 
 		if userID, err = AuthRpo.CreateUser(input.Email); err != nil {
@@ -55,7 +54,7 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 			return
 		}
 
-		err = a.SendEmail(input.Email, otp, verificationID)
+		err = a.SendEmail(input.Email, otp)
 		return
 	}
 
@@ -74,9 +73,9 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 	return
 }
 
-func (a *Auth) SendEmail(email string, otp string, verificationID string) error {
+func (a *Auth) SendEmail(email string, otp string) error {
 	emailSvcURI := fmt.Sprintf("%s/v1/send-email", config.Params.NotificationSvcDomain)
-	verificationLink := fmt.Sprintf("%s/verification/?otp=%s&auth=%s", config.Params.ServiceFrontend, otp, verificationID)
+	verificationLink := fmt.Sprintf("%s/verification/?otp=%s&auth=%s", config.Params.ServiceFrontend, otp, email)
 
 	if code, _, errs := fiber.
 		Post(emailSvcURI).
