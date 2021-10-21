@@ -17,6 +17,7 @@ type Config struct {
 	NotificationSvcDomain string `required:"true"`
 	AirBringrDomain       string `required:"true"`
 	CORSPermitted         string `required:"true"`
+	MicroAPIToken         string `required:"true"`
 }
 
 func New() {

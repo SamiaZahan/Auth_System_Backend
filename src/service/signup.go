@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/emamulandalib/airbringr-auth/config"
 	"github.com/emamulandalib/airbringr-auth/dto"
@@ -33,20 +34,24 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 	}
 
 	// try to create user, user profile and verification link
-	otp := GenerateRandNum()
+	var otp string
+	otpSvc := OtpSvc{MicroAPIToken: config.Params.MicroAPIToken}
+	if otp, err = otpSvc.Generate(OtpGenerateRequest{
+		Expiry: int64(time.Hour * 24),
+		Id:     input.Email,
+	}); err != nil {
+		return genericSignupFailureMsg
+	}
+
 	createVerificationLink := func(sessCtx mongo.SessionContext) (i interface{}, err error) {
 		var userID string
 		var verificationID string
 		AuthRpo := repository.Auth{Ctx: sessCtx}
-		VerificationRepo := repository.Verification{Ctx: sessCtx}
 
 		if userID, err = AuthRpo.CreateUser(input.Email); err != nil {
 			return
 		}
 		if err = AuthRpo.CreateUserProfile(userID, input.FirstName, input.LastName); err != nil {
-			return
-		}
-		if verificationID, err = VerificationRepo.Create(input.Email, otp, userID); err != nil {
 			return
 		}
 
@@ -69,9 +74,9 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 	return
 }
 
-func (a *Auth) SendEmail(email string, otp int, verificationID string) error {
+func (a *Auth) SendEmail(email string, otp string, verificationID string) error {
 	emailSvcURI := fmt.Sprintf("%s/v1/send-email", config.Params.NotificationSvcDomain)
-	verificationLink := fmt.Sprintf("%s/verification/?otp=%d&auth=%s", config.Params.ServiceFrontend, otp, verificationID)
+	verificationLink := fmt.Sprintf("%s/verification/?otp=%s&auth=%s", config.Params.ServiceFrontend, otp, verificationID)
 
 	if code, _, errs := fiber.
 		Post(emailSvcURI).
