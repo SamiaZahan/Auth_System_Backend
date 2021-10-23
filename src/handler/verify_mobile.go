@@ -36,7 +36,7 @@ func (receiver *Handler) MobileVerificationOTP(c *fiber.Ctx) (err error) {
 	}
 
 	return c.JSON(response.Payload{
-		Message: "Please check your SMS.",
+		Message: "Please check your SMS. The OTP will be valid for 5 minutes.",
 	})
 }
 

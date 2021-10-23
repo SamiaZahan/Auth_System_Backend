@@ -111,3 +111,13 @@ func (a *Auth) SetUserMobileByID(userID string, mobile string) (err error) {
 	)
 	return
 }
+
+func (a *Auth) SetUserMobileByEmail(email string, mobile string) (err error) {
+	col := DB.Collection(UserCollection)
+	_, err = col.UpdateOne(
+		a.Ctx,
+		bson.M{"email": bson.M{"$eq": email}},
+		bson.M{"$set": bson.M{"mobile": mobile}},
+	)
+	return
+}

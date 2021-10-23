@@ -10,6 +10,7 @@ import (
 	"github.com/emamulandalib/airbringr-auth/dto"
 	"github.com/emamulandalib/airbringr-auth/repository"
 	"github.com/gofiber/fiber/v2"
+	"github.com/micro/services/clients/go/otp"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -84,29 +85,28 @@ func (s *SmsOtp) Verify(input dto.VerifyOtpInput) (err error) {
 }
 
 func (s *SmsOtp) VerifyAndRegisterMobileNumber(input dto.VerifyMobileInput) (err error) {
-	ctx := context.Background()
 	genericFailureMsg := errors.New("mobile verification failed")
-	vRepo := repository.Verification{Ctx: ctx}
-	var vDoc repository.VerificationDoc
-	var authVerDoc repository.VerificationDoc
+	otpSvc := otp.NewOtpService(config.Params.MicroAPIToken)
+	resp, err := otpSvc.Validate(&otp.ValidateRequest{
+		Code: fmt.Sprintf("%d", input.OTP),
+		Id:   input.Mobile,
+	})
 
-	if vDoc, err = vRepo.GetByEmailOrMobileAndCode(input.Mobile, input.OTP); err != nil {
+	if err != nil {
 		log.Error(err.Error())
 		return genericFailureMsg
 	}
 
-	if authVerDoc, err = vRepo.GetByID(input.Auth); err != nil {
-		log.Error(err.Error())
+	if !resp.Success {
+		log.Error(errors.New("OTP verification not success from M30"))
 		return genericFailureMsg
 	}
 
-	userID := authVerDoc.UserID.Hex()
 
 	cb := func(sessCtx mongo.SessionContext) (i interface{}, err error) {
-		VRepo := repository.Verification{Ctx: sessCtx}
 		aRepo := repository.Auth{Ctx: sessCtx}
 
-		if err = aRepo.SetUserMobileByID(userID, input.Mobile); err != nil {
+		if err = aRepo.SetUserMobileByEmail(input.Auth, input.Mobile); err != nil {
 			return
 		}
 
@@ -114,11 +114,11 @@ func (s *SmsOtp) VerifyAndRegisterMobileNumber(input dto.VerifyMobileInput) (err
 		var userDoc *repository.UserDoc
 		var userProfileDoc *repository.UserProfileDoc
 
-		if userDoc, err = aRepo.GetUserByID(userID); err != nil {
+		if userDoc, err = aRepo.GetUserByEmail(input.Auth); err != nil {
 			return
 		}
 
-		if userProfileDoc, err = aRepo.GetUserProfileByID(userID); err != nil {
+		if userProfileDoc, err = aRepo.GetUserProfileByID(userDoc.ID.Hex()); err != nil {
 			return
 		}
 
@@ -136,17 +136,10 @@ func (s *SmsOtp) VerifyAndRegisterMobileNumber(input dto.VerifyMobileInput) (err
 			return nil, genericFailureMsg
 		}
 
-		if err = VRepo.DeleteByID(input.Auth); err != nil {
-			return
-		}
-
-		if err = VRepo.DeleteByID(vDoc.ID.Hex()); err != nil {
-			return
-		}
-
 		return
 	}
 
+	ctx := context.Background()
 	var sess mongo.Session
 	if sess, err = repository.MongoClient.StartSession(); err != nil {
 		log.Error(err.Error())
