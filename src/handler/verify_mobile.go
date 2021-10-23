@@ -37,7 +37,6 @@ func (receiver *Handler) MobileVerificationOTP(c *fiber.Ctx) (err error) {
 
 	return c.JSON(response.Payload{
 		Message: "Please check your SMS.",
-		Data:    dto.VerificationOutput{Verified: true},
 	})
 }
 

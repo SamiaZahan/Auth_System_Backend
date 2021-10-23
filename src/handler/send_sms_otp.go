@@ -27,7 +27,7 @@ func (receiver *Handler) SendSmsOtp(c *fiber.Ctx) (err error) {
 	}
 
 	svc := service.SmsOtp{}
-	if err = svc.Send(*input, false); err != nil {
+	if err = svc.Send(*input); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Payload{
 			Message: err.Error(),
 			Errors:  err,

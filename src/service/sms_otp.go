@@ -16,27 +16,19 @@ import (
 
 type SmsOtp struct{}
 
-func (s *SmsOtp) Send(input dto.SendSmsOtpInput, donotCheckExisting bool) (err error) {
+func (s *SmsOtp) Send(input dto.SendSmsOtpInput) (err error) {
 	genericFailureMsg := errors.New("OTP send failed")
-	ctx := context.Background()
-	aRepo := repository.Auth{Ctx: ctx}
-
-	if _, err = aRepo.GetUserByMobile(input.Mobile); err != nil && err != mongo.ErrNoDocuments {
-		return genericFailureMsg
-	}
-
-	if !donotCheckExisting {
-		if !ExisitingMobile(input.Mobile) {
-			return errors.New("no user found with this mobile. Please signup")
-		}
-	}
-
 	otpSvc := OtpSvc{MicroAPIToken: config.Params.MicroAPIToken}
 	otp, err := otpSvc.Generate(OtpGenerateRequest{
 		Expiry: int64(time.Minute * 5),
 		Id:     input.Mobile,
 	})
-	
+
+	if err != nil {
+		log.Error(err.Error())
+		return genericFailureMsg
+	}
+
 	smsSvcURI := fmt.Sprintf("%s/v1/send-sms", config.Params.NotificationSvcDomain)
 	if code, _, errs := fiber.
 		Post(smsSvcURI).
@@ -53,11 +45,26 @@ func (s *SmsOtp) Send(input dto.SendSmsOtpInput, donotCheckExisting bool) (err e
 }
 
 func (s *SmsOtp) MobileVerificationOtp(input dto.SendSmsOtpInput) (err error) {
+	genericFailureMsg := errors.New("OTP send failed")
+	mblNmbrExistMsg := errors.New("mobile number already taken")
+	var u *repository.UserDoc
+
 	if ExisitingMobile(input.Mobile) {
-		return errors.New("mobile number already taken")
+		return mblNmbrExistMsg
 	}
 
-	err = s.Send(input, true)
+	ctx := context.Background()
+	aRepo := repository.Auth{Ctx: ctx}
+
+	if u, err = aRepo.GetUserByMobile(input.Mobile); err != nil && err != mongo.ErrNoDocuments {
+		return genericFailureMsg
+	}
+
+	if u != nil {
+		return mblNmbrExistMsg
+	}
+
+	err = s.Send(input)
 	return
 }
 
