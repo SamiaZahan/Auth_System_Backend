@@ -38,7 +38,7 @@ func (h *Handler) SendEmailOTP(c *fiber.Ctx) (err error) {
 	}
 
 	return c.JSON(response.Payload{
-		Message: "Please check your email for the OTP.",
+		Message: "Please check your email for the OTP. The OTP will be valid for 5 minutes.",
 		Data:    dto.VerificationOutput{Verified: true},
 	})
 }

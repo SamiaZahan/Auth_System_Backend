@@ -27,7 +27,7 @@ func (receiver *Handler) SendSmsOtp(c *fiber.Ctx) (err error) {
 	}
 
 	svc := service.SmsOtp{}
-	if err = svc.Send(*input); err != nil {
+	if err = svc.SendSmsOtp(*input); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Payload{
 			Message: err.Error(),
 			Errors:  err,
@@ -35,6 +35,6 @@ func (receiver *Handler) SendSmsOtp(c *fiber.Ctx) (err error) {
 	}
 
 	return c.JSON(response.Payload{
-		Message: "OTP has been sent successfully.",
+		Message: "OTP has been sent successfully. The OTP will be valid for 5 minutes.",
 	})
 }

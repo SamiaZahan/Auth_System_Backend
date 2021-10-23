@@ -33,7 +33,6 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 		return errors.New("An user with this email is already exist.")
 	}
 
-	// try to create user, user profile and verification link
 	var otp string
 	otpSvc := OtpSvc{MicroAPIToken: config.Params.MicroAPIToken}
 	if otp, err = otpSvc.Generate(OtpGenerateRequest{

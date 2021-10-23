@@ -10,19 +10,18 @@ import (
 	"github.com/emamulandalib/airbringr-auth/dto"
 	"github.com/emamulandalib/airbringr-auth/repository"
 	"github.com/gofiber/fiber/v2"
-	"github.com/micro/services/clients/go/otp"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type SmsOtp struct{}
 
-func (s *SmsOtp) Send(input dto.SendSmsOtpInput) (err error) {
+func (s *SmsOtp) Send(mobile string) (err error) {
 	genericFailureMsg := errors.New("OTP send failed")
 	otpSvc := OtpSvc{MicroAPIToken: config.Params.MicroAPIToken}
 	otp, err := otpSvc.Generate(OtpGenerateRequest{
 		Expiry: int64(time.Minute * 5),
-		Id:     input.Mobile,
+		Id:     mobile,
 	})
 
 	if err != nil {
@@ -35,13 +34,35 @@ func (s *SmsOtp) Send(input dto.SendSmsOtpInput) (err error) {
 		Post(smsSvcURI).
 		JSON(fiber.Map{
 			"message": fmt.Sprintf("AirBringr: %s", otp),
-			"number":  input.Mobile,
+			"number":  mobile,
 		}).
 		String(); code != fiber.StatusOK {
 		log.Error(errs)
 		return errors.New("falied to send SMS")
 	}
 
+	return
+}
+
+func (s *SmsOtp) SendSmsOtp(input dto.SendSmsOtpInput) (err error) {
+	genericErrMsg := errors.New("OTP send failed")
+	ctx := context.Background()
+	authRepo := repository.Auth{Ctx: ctx}
+	_, err = authRepo.GetUserByMobile(input.Mobile)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return errors.New("this number is not registered")
+		}
+
+		log.Error(err.Error())
+		return genericErrMsg
+	}
+
+	err = s.Send(input.Mobile)
+	if err != nil {
+		return genericErrMsg
+	}
 	return
 }
 
@@ -65,43 +86,36 @@ func (s *SmsOtp) MobileVerificationOtp(input dto.SendSmsOtpInput) (err error) {
 		return mblNmbrExistMsg
 	}
 
-	err = s.Send(input)
+	err = s.Send(input.Mobile)
 	return
 }
 
 func (s *SmsOtp) Verify(input dto.VerifyOtpInput) (err error) {
-	ctx := context.Background()
 	genericFailureMsg := errors.New("OTP verification failed")
-	vRepo := repository.Verification{Ctx: ctx}
-	var vDoc repository.VerificationDoc
+	otpSvc := OtpSvc{MicroAPIToken: config.Params.MicroAPIToken}
+	isValid := otpSvc.Validate(OtpValidateRequest{
+		Code: fmt.Sprintf("%d", input.OTP),
+		Id:   input.EmailOrMobile,
+	})
 
-	if vDoc, err = vRepo.GetByEmailOrMobileAndCode(input.EmailOrMobile, input.OTP); err != nil {
-		log.Error(err.Error())
+	if !isValid {
 		return genericFailureMsg
 	}
-
-	_ = vRepo.DeleteByID(vDoc.ID.Hex())
 	return
 }
 
 func (s *SmsOtp) VerifyAndRegisterMobileNumber(input dto.VerifyMobileInput) (err error) {
 	genericFailureMsg := errors.New("mobile verification failed")
-	otpSvc := otp.NewOtpService(config.Params.MicroAPIToken)
-	resp, err := otpSvc.Validate(&otp.ValidateRequest{
+	otpSvc := OtpSvc{MicroAPIToken: config.Params.MicroAPIToken}
+	isValid := otpSvc.Validate(OtpValidateRequest{
 		Code: fmt.Sprintf("%d", input.OTP),
 		Id:   input.Mobile,
 	})
 
-	if err != nil {
-		log.Error(err.Error())
-		return genericFailureMsg
-	}
-
-	if !resp.Success {
+	if !isValid {
 		log.Error(errors.New("OTP verification not success from M30"))
 		return genericFailureMsg
 	}
-
 
 	cb := func(sessCtx mongo.SessionContext) (i interface{}, err error) {
 		aRepo := repository.Auth{Ctx: sessCtx}
