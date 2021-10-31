@@ -11,11 +11,9 @@ import (
 	"github.com/emamulandalib/airbringr-auth/app"
 	"github.com/emamulandalib/airbringr-auth/config"
 	"github.com/emamulandalib/airbringr-auth/handler"
-	"github.com/emamulandalib/airbringr-auth/response"
 	"github.com/emamulandalib/airbringr-auth/route"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
@@ -36,12 +34,11 @@ func main() {
 	App.Bootstrap()
 	defer func() { _ = App.Mongo.Disconnect() }()
 
-	Handler := handler.New()
-
 	// setup App
 	server := fiber.New(fiber.Config{
 		IdleTimeout: idleTimeout,
 	})
+
 
 	// setup middlewares
 	server.Use(requestid.New())
@@ -50,53 +47,23 @@ func main() {
 		AllowOrigins: config.Params.CORSPermitted,
 	}))
 
-	// rete limit for SEND SMS OTP
-	server.Use(limiter.New(limiter.Config{
-		Next: func(c *fiber.Ctx) bool {
-			return c.Path() != "/v1/send-sms-otp"
-		},
-		Max:        2,
-		Expiration: time.Minute * 60,
-		LimitReached: func(c *fiber.Ctx) error {
-			return c.
-				Status(fiber.StatusTooManyRequests).
-				JSON(response.Payload{
-					Message: "Too many requests. Please try again after 1 hour or you can try to login using email.",
-				})
-		},
-	}))
-
-	// rete limit for SEND Email OTP
-	server.Use(limiter.New(limiter.Config{
-		Next: func(c *fiber.Ctx) bool {
-			return c.Path() != "/v1/send-email-otp"
-		},
-		Max:        3,
-		Expiration: time.Minute * 60,
-		LimitReached: func(c *fiber.Ctx) error {
-			return c.
-				Status(fiber.StatusTooManyRequests).
-				JSON(response.Payload{
-					Message: "Too many requests. Please try again after 1 hour or you can try to login using mobile number",
-				})
-		},
-	}))
-
 	server.Use(logger.New(logger.Config{
 		Format:   "[${time}] ${status} ${locals:requestid} - ${latency} ${method} ${path}\n",
 		TimeZone: "Asia/Dhaka",
 	}))
 
+	App.SetCacheMiddleware(server)
+	App.SetRateLimiterMiddleware(server)
+
 	//routes
+	Handler := handler.New()
 	server.Get("/", Handler.Home)
 	route.V1(server, Handler)
-
-	// 404
-	server.Use(Handler.NotFound)
+	server.Use(Handler.NotFound) // 404
 
 	// Listen from a different goroutine
 	go func() {
-		if err := server.Listen(fmt.Sprintf("0.0.0.0:%d", config.Params.Port)); err != nil {
+		if err := server.Listen(fmt.Sprintf(":%d", config.Params.Port)); err != nil {
 			log.Fatal(err.Error())
 		}
 	}()

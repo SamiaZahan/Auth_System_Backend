@@ -32,6 +32,16 @@ require (
 )
 
 require (
+	github.com/gofiber/storage/redis v0.0.0-20211018071720-3d9778b4da19
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/m3o/m3o-go/client v0.0.0-20210421144725-8bfd7992ada3 // indirect
+)
+
+require (
+	github.com/cespare/xxhash/v2 v2.1.1 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+	github.com/go-redis/redis/v8 v8.9.0 // indirect
+	go.opentelemetry.io/otel v0.20.0 // indirect
+	go.opentelemetry.io/otel/metric v0.20.0 // indirect
+	go.opentelemetry.io/otel/trace v0.20.0 // indirect
 )
