@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"github.com/emamulandalib/airbringr-auth/config"
 	"github.com/gofiber/fiber/v2"
-	"time"
-
 	//"fmt"
 	//"time"
 	//"github.com/emamulandalib/airbringr-auth/config"
@@ -28,10 +26,10 @@ type LoginResponse struct {
 
 func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 	genericLoginFailureMsg := errors.New("Login failed for some technical reason.")
-	//ctx := context.Background()
+	ctx := context.Background()
 	//context with time out (study n input)
-	var ctx, cancel = context.WithTimeout(context.Background(), time.Millisecond*000)
-	defer cancel()
+	//var ctx, cancel = context.WithTimeout(context.Background(), time.Millisecond*000)
+	//defer cancel()
 	authRepo := repository.Auth{Ctx: ctx}
 
 	// try to get existing user
