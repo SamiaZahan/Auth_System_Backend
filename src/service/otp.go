@@ -2,8 +2,9 @@ package service
 
 import (
 	"errors"
+	"go.m3o.com/otp"
 
-	"github.com/micro/services/clients/go/otp"
+	//"github.com/micro/services/clients/go/otp"
 	log "github.com/sirupsen/logrus"
 )
 

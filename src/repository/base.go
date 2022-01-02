@@ -17,11 +17,12 @@ const UserProfileCollection = "user_profile"
 const VerificationCollection = "verification"
 
 type UserDoc struct {
-	ID      primitive.ObjectID `bson:"_id"`
-	Email   string             `bson:"email"`
-	Mobile  string             `bson:"mobile"`
-	Active  bool               `bson:"active"`
-	Created time.Time          `bson:"created"`
+	ID       primitive.ObjectID `bson:"_id"`
+	Email    string             `bson:"email"`
+	Password string             `bson:"password"`
+	Mobile   string             `bson:"mobile"`
+	Active   bool               `bson:"active"`
+	Created  time.Time          `bson:"created"`
 }
 
 type UserProfileDoc struct {

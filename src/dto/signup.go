@@ -9,6 +9,7 @@ type SignupInput struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	Email     string `json:"email"`
+	Password  string `json:"password"`
 }
 
 func (input SignupInput) Validate() error {
@@ -16,5 +17,6 @@ func (input SignupInput) Validate() error {
 		validation.Field(&input.FirstName, validation.Required),
 		validation.Field(&input.LastName, validation.Required),
 		validation.Field(&input.Email, validation.Required, is.Email),
+		validation.Field(&input.Password, validation.Required),
 	)
 }

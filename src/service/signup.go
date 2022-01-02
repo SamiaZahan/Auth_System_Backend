@@ -46,7 +46,7 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 		var userID string
 		AuthRpo := repository.Auth{Ctx: sessCtx}
 
-		if userID, err = AuthRpo.CreateUser(input.Email); err != nil {
+		if userID, err = AuthRpo.CreateUser(input.Email, input.Password); err != nil {
 			return
 		}
 		if err = AuthRpo.CreateUserProfile(userID, input.FirstName, input.LastName); err != nil {
