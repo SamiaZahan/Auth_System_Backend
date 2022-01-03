@@ -93,6 +93,7 @@ func (a *Auth) CreateUser(email string, password string) (ID string, err error) 
 		Password: password,
 		Active:   false,
 		Created:  time.Now(),
+		Updated:  time.Now(),
 	})
 
 	if err != nil {
@@ -112,6 +113,7 @@ func (a *Auth) CreateUserProfile(userID string, firstName string, lastName strin
 		FirstName: firstName,
 		LastName:  lastName,
 		Created:   time.Now(),
+		Updated:   time.Now(),
 	})
 	return
 }

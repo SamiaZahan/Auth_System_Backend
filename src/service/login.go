@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"github.com/emamulandalib/airbringr-auth/config"
 	"github.com/gofiber/fiber/v2"
+	"time"
+
 	//"fmt"
 	//"time"
 	//"github.com/emamulandalib/airbringr-auth/config"
@@ -26,25 +28,23 @@ type LoginResponse struct {
 
 func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 	genericLoginFailureMsg := errors.New("Login failed for some technical reason.")
-	ctx := context.Background()
+	//ctx := context.Background()
 	//context with time out (study n input)
-	//var ctx, cancel = context.WithTimeout(context.Background(), time.Millisecond*000)
-	//defer cancel()
+	var ctx, cancel = context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
 	authRepo := repository.Auth{Ctx: ctx}
 
 	// try to get existing user
 	existingUser, err := authRepo.GetUserByEmailOrMobile(input.EmailOrMobile)
-	if err != nil && err != mongo.ErrNoDocuments {
-		log.Error(res.Error.Error())
-		res.Error = genericLoginFailureMsg
-		return res
+	if err != nil {
+		if err != mongo.ErrNoDocuments {
+			return LoginResponse{Error: errors.New("User not found")}
+		}
+		log.Error(err.Error())
+		return LoginResponse{Error: genericLoginFailureMsg}
 	}
-	hashedPassword, passwordHashingError := authRepo.HashPassword(input.Password)
-	if passwordHashingError != nil {
-		log.Error(res.Error.Error())
-		return
-	}
-	passwordMatched := authRepo.ComparePasswords(hashedPassword, []byte(existingUser.Password))
+
+	passwordMatched := authRepo.ComparePasswords(existingUser.Password, []byte(input.Password))
 
 	if existingUser != nil && passwordMatched == true {
 		code, inputMarshalError := json.Marshal(input)
@@ -58,9 +58,9 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 	}
 
 	//Lookup in Old DB
-	doesUserExists := fmt.Sprintf("%s/does-user-exists/?code=%s", config.Params.AirBringrDomain, res.Code)
+	doesUserExistsURI := fmt.Sprintf("%s/does-user-exists/?code=%s", config.Params.AirBringrDomain, res.Code)
 	statusCode, body, errs := fiber.
-		Post(doesUserExists).
+		Post(doesUserExistsURI).
 		JSON(fiber.Map{
 			"emailOrMobile": input.EmailOrMobile,
 			"password":      input.Password,
@@ -70,21 +70,34 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		res.Error = errors.New("Login Error")
 		return res
 	}
-	if body.status == true {
-		authRepo.CreateUser(body.user.Email, body.user.Password)
 
-		code, inputMarshalError := json.Marshal(input)
-
-		return LoginResponse{
-			Redirect: true,
-			Code:     b64.StdEncoding.EncodeToString([]byte(code)),
-			Error:    inputMarshalError,
+	type response struct {
+		status  bool
+		message string
+		user    struct {
+			email    string
+			password string
 		}
 	}
+	data := response{}
+	json.Unmarshal([]byte(body), &data)
 
-	if body.status == false {
+	if data.status == false {
 		res.Error = errors.New("Not an  User. Please Sign Up")
 		return res
 	}
+	_, err = authRepo.CreateUser(data.user.email, data.user.password)
+	if err != nil {
+		return LoginResponse{}
+	}
+
+	code, inputMarshalError := json.Marshal(input)
+
+	return LoginResponse{
+		Redirect: true,
+		Code:     b64.StdEncoding.EncodeToString([]byte(code)),
+		Error:    inputMarshalError,
+	}
+
 	return
 }

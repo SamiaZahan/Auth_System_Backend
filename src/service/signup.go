@@ -45,8 +45,12 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 	createVerificationLink := func(sessCtx mongo.SessionContext) (i interface{}, err error) {
 		var userID string
 		AuthRpo := repository.Auth{Ctx: sessCtx}
-
-		if userID, err = AuthRpo.CreateUser(input.Email, input.Password); err != nil {
+		hashedPassword, passwordHasingError := authRepo.HashPassword(input.Password)
+		if err != nil {
+			log.Error(passwordHasingError.Error())
+			return
+		}
+		if userID, err = AuthRpo.CreateUser(input.Email, hashedPassword); err != nil {
 			return
 		}
 		if err = AuthRpo.CreateUserProfile(userID, input.FirstName, input.LastName); err != nil {

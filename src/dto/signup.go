@@ -3,6 +3,7 @@ package dto
 import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
+	"regexp"
 )
 
 type SignupInput struct {
@@ -17,6 +18,8 @@ func (input SignupInput) Validate() error {
 		validation.Field(&input.FirstName, validation.Required),
 		validation.Field(&input.LastName, validation.Required),
 		validation.Field(&input.Email, validation.Required, is.Email),
-		validation.Field(&input.Password, validation.Required),
+		validation.Field(&input.Password, validation.Match(regexp.
+			MustCompile("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$")).
+			Error("Password must have minimum eight characters, at least one letter and one number")),
 	)
 }

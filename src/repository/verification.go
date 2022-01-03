@@ -22,6 +22,7 @@ func (v *Verification) Create(emailOrMobile string, code int, userId string) (ID
 		EmailOrMobile: emailOrMobile,
 		Code:          code,
 		Created:       time.Now(),
+		Updated:       time.Now(),
 	})
 	ID = res.InsertedID.(primitive.ObjectID).Hex()
 	return

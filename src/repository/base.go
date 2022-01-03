@@ -23,6 +23,7 @@ type UserDoc struct {
 	Mobile   string             `bson:"mobile"`
 	Active   bool               `bson:"active"`
 	Created  time.Time          `bson:"created"`
+	Updated  time.Time          `bson:"updated"`
 }
 
 type UserProfileDoc struct {
@@ -33,6 +34,7 @@ type UserProfileDoc struct {
 	Gender        string             `bson:"gender"`
 	ProfilePicURI string             `bson:"profile_pic_uri"`
 	Created       time.Time          `bson:"created"`
+	Updated       time.Time          `bson:"updated"`
 }
 
 type VerificationDoc struct {
@@ -41,4 +43,5 @@ type VerificationDoc struct {
 	EmailOrMobile string             `bson:"email_or_mobile"`
 	Code          int                `bson:"code"`
 	Created       time.Time          `bson:"created"`
+	Updated       time.Time          `bson:"updated"`
 }

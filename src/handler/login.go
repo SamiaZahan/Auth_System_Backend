@@ -8,6 +8,7 @@ import (
 	"github.com/emamulandalib/airbringr-auth/response"
 	"github.com/emamulandalib/airbringr-auth/service"
 	"github.com/gofiber/fiber/v2"
+	log "github.com/sirupsen/logrus"
 )
 
 func (h *Handler) Login(c *fiber.Ctx) error {
@@ -32,11 +33,12 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 	svc := service.Auth{}
 	res := svc.Login(*input)
 
-	if res.Redirect == true {
-		err = c.Redirect(fmt.Sprintf("%s/force-login/?code=%s", config.Params.AirBringrDomain, res.Code))
+	if res.Redirect {
+		err = c.Redirect(fmt.Sprintf("%s/forced-login/?code=%s", config.Params.AirBringrDomain, res.Code))
 		if err != nil {
+			log.Error(err)
 			return c.Status(fiber.StatusBadRequest).JSON(response.Payload{
-				Message: response.ValidationFailedMsg,
+				Message: "Failed to Login",
 				Errors:  err,
 			})
 		}
@@ -44,7 +46,7 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 
 	if res.Error != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Payload{
-			Message: err.Error(),
+			Message: "Failed to Login",
 			Errors:  err,
 		})
 	}
