@@ -36,7 +36,7 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 	if res.Redirect {
 		err = c.Redirect(fmt.Sprintf("%s/forced-login/?code=%s", config.Params.AirBringrDomain, res.Code))
 		if err != nil {
-			log.Error(err)
+			log.Error(err.Error())
 			return c.Status(fiber.StatusBadRequest).JSON(response.Payload{
 				Message: "Failed to Login",
 				Errors:  err,

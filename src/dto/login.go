@@ -17,6 +17,6 @@ func (input LoginInput) Validate() error {
 		validation.Field(&input.Password, validation.Required),
 		validation.Field(&input.EmailOrMobile, validation.
 			When(strings.Contains(input.EmailOrMobile, "@"), is.Email).
-			Else(validation.Match(regexp.MustCompile("^\\+[1-9]{1}[0-9]{3,14}$")))),
+			Else(validation.Match(regexp.MustCompile("^(\\+[1-9]{1})?[0-9]{4,14}$")))),
 	)
 }

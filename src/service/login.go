@@ -46,7 +46,7 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 
 	passwordMatched := authRepo.ComparePasswords(existingUser.Password, []byte(input.Password))
 
-	if existingUser != nil && passwordMatched == true {
+	if passwordMatched {
 		code, inputMarshalError := json.Marshal(input)
 
 		return LoginResponse{
@@ -67,7 +67,7 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		}).String()
 	if statusCode != fiber.StatusOK {
 		log.Error(errs)
-		res.Error = errors.New("Login Error")
+		res.Error = errors.New("Failed to login")
 		return res
 	}
 
@@ -80,13 +80,19 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		}
 	}
 	data := response{}
-	json.Unmarshal([]byte(body), &data)
+	_ = json.Unmarshal([]byte(body), &data)
 
-	if data.status == false {
+	if !data.status {
 		res.Error = errors.New("Not an  User. Please Sign Up")
 		return res
 	}
-	_, err = authRepo.CreateUser(data.user.email, data.user.password)
+
+	hashedPassword, passwordHasingError := authRepo.HashPassword(data.user.password)
+	if err != nil {
+		log.Error(passwordHasingError.Error())
+		return
+	}
+	_, err = authRepo.CreateUser(data.user.email, hashedPassword)
 	if err != nil {
 		return LoginResponse{}
 	}
