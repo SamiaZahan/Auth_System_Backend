@@ -87,7 +87,7 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		return res
 	}
 
-	hashedPassword, passwordHasingError := authRepo.HashPassword(data.user.password)
+	hashedPassword, passwordHasingError := authRepo.HashPassword(input.Password)
 	if err != nil {
 		log.Error(passwordHasingError.Error())
 		return
