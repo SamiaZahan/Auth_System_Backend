@@ -75,8 +75,10 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		status  bool
 		message string
 		user    struct {
-			email    string
-			password string
+			userId    string
+			email     string
+			firstName string
+			lastName  string
 		}
 	}
 	data := response{}
@@ -93,6 +95,10 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		return
 	}
 	_, err = authRepo.CreateUser(data.user.email, hashedPassword)
+	if err != nil {
+		return LoginResponse{}
+	}
+	err = authRepo.CreateUserProfile(data.user.userId, data.user.firstName, data.user.lastName)
 	if err != nil {
 		return LoginResponse{}
 	}
