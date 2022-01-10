@@ -121,35 +121,33 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 	if err != nil {
 		panic(err)
 	}
-	session, err := repository.MongoClient.StartSession()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer session.EndSession(context.Background())
-	err = mongo.WithSession(context.Background(), session, func(sessionContext mongo.SessionContext) error {
-		if err = session.StartTransaction(txnOpts); err != nil {
-			return err
-		}
+
+	insertUser := func(sessionContext mongo.SessionContext) (i interface{}, err error) {
 		AuthRepo := repository.Auth{Ctx: sessionContext}
 		_, err = AuthRepo.CreateUser(data.user.email, hashedPassword)
 		if err != nil {
-			return err
+			return
 		}
 		err = AuthRepo.CreateUserProfile(data.user.userId, data.user.firstName, data.user.lastName)
 		if err != nil {
-			return err
+			return
 		}
-		if err = session.CommitTransaction(sessionContext); err != nil {
-			return err
+		if err != nil {
+			return
 		}
+		return
+	}
 
-		return nil
-	})
-	if err != nil {
-		if abortErr := session.AbortTransaction(context.Background()); abortErr != nil {
-			panic(abortErr)
-		}
-		panic(err)
+	var session mongo.Session
+	if session, err = repository.MongoClient.StartSession(); err != nil {
+		log.Error(err.Error())
+		return LoginResponse{Error: genericLoginFailureMsg}
+	}
+	defer session.EndSession(context.Background())
+
+	if _, err = session.WithTransaction(context.Background(), insertUser, txnOpts); err != nil {
+		log.Error(err.Error())
+		return LoginResponse{Error: genericLoginFailureMsg}
 	}
 
 	code, inputMarshalError := json.Marshal(input)
