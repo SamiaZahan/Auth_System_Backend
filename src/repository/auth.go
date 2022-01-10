@@ -40,6 +40,13 @@ func (a *Auth) GetUserProfileByID(ID string) (user *UserProfileDoc, err error) {
 	return
 }
 
+// GetInfoByCountryPrefix Get Country Code
+func (a *Auth) GetInfoByCountryPrefix(countryPrefix string) (phoneNumberMap *PhoneNumberMapDoc, err error) {
+	col := DB.Collection(PhoneNumberMapCollection)
+	err = col.FindOne(a.Ctx, bson.D{{Key: "country_prefix", Value: countryPrefix}}).Decode(&phoneNumberMap)
+	return
+}
+
 // GetUserByEmailOrMobile get user  by email or mobile
 func (a *Auth) GetUserByEmailOrMobile(emailOrMobile string) (user *UserDoc, err error) {
 	col := DB.Collection(UserCollection)

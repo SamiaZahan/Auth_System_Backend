@@ -6,15 +6,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/emamulandalib/airbringr-auth/config"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readconcern"
+	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 	"time"
 
-	//"fmt"
-	//"time"
-	//"github.com/emamulandalib/airbringr-auth/config"
 	"github.com/emamulandalib/airbringr-auth/dto"
 	"github.com/emamulandalib/airbringr-auth/repository"
-	//"github.com/gofiber/fiber/v2"
+
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -28,12 +30,30 @@ type LoginResponse struct {
 
 func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 	genericLoginFailureMsg := errors.New("Login failed for some technical reason.")
-	//ctx := context.Background()
-	//context with time out (study n input)
 	var ctx, cancel = context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	authRepo := repository.Auth{Ctx: ctx}
+	mongoDb := repository.Mongo{}
 
+	//input.EmailOrMobile check is email??
+	err := validation.Validate(input.EmailOrMobile, is.Email)
+	if err != nil {
+		if input.CountryPrefix == "" {
+			return LoginResponse{Error: errors.New("Country Prefix Required")}
+		}
+		phoneNumberMap, err := authRepo.GetInfoByCountryPrefix(input.CountryPrefix)
+		if err != nil {
+			return LoginResponse{Error: errors.New("Not a valid Country Prefix")}
+		}
+		countryCode := phoneNumberMap.CountryCode
+		//check valid phone number
+		phoneValidate := PhoneValidate{}
+		valid, _ := phoneValidate.ValidatePhoneNumber(input.EmailOrMobile, countryCode)
+		if !valid {
+			return LoginResponse{Error: errors.New("Not a Valid Phone Number")}
+		}
+
+	}
 	// try to get existing user
 	existingUser, err := authRepo.GetUserByEmailOrMobile(input.EmailOrMobile)
 	if err != nil {
@@ -71,7 +91,7 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		return res
 	}
 
-	type response struct {
+	type Response struct {
 		status  bool
 		message string
 		user    struct {
@@ -81,7 +101,7 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 			lastName  string
 		}
 	}
-	data := response{}
+	var data Response
 	_ = json.Unmarshal([]byte(body), &data)
 
 	if !data.status {
@@ -94,14 +114,39 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		log.Error(passwordHasingError.Error())
 		return
 	}
-	_, err = authRepo.CreateUser(data.user.email, hashedPassword)
+
+	//Transaction
+	wc := writeconcern.New(writeconcern.WMajority())
+	rc := readconcern.Snapshot()
+	txnOpts := options.Transaction().SetWriteConcern(wc).SetReadConcern(rc)
+	MongoClient, err := mongoDb.Connect()
 	if err != nil {
-		return LoginResponse{}
+		panic(err)
 	}
-	err = authRepo.CreateUserProfile(data.user.userId, data.user.firstName, data.user.lastName)
+	session, err := MongoClient.StartSession()
 	if err != nil {
-		return LoginResponse{}
+		log.Fatal(err)
 	}
+	defer session.EndSession(context.Background())
+	err = mongo.WithSession(context.Background(), session, func(sessionContext mongo.SessionContext) error {
+		if err = session.StartTransaction(txnOpts); err != nil {
+			return err
+		}
+		authRepo = repository.Auth{Ctx: sessionContext}
+		_, err = authRepo.CreateUser(data.user.email, hashedPassword)
+		if err != nil {
+			return err
+		}
+		err = authRepo.CreateUserProfile(data.user.userId, data.user.firstName, data.user.lastName)
+		if err != nil {
+			return err
+		}
+		if err = session.CommitTransaction(sessionContext); err != nil {
+			return err
+		}
+
+		return nil
+	})
 
 	code, inputMarshalError := json.Marshal(input)
 

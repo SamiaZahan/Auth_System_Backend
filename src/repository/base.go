@@ -15,6 +15,7 @@ var (
 const UserCollection = "user"
 const UserProfileCollection = "user_profile"
 const VerificationCollection = "verification"
+const PhoneNumberMapCollection = "phone_number_map"
 
 type UserDoc struct {
 	ID       primitive.ObjectID `bson:"_id"`
@@ -44,4 +45,11 @@ type VerificationDoc struct {
 	Code          int                `bson:"code"`
 	Created       time.Time          `bson:"created"`
 	Updated       time.Time          `bson:"updated"`
+}
+
+type PhoneNumberMapDoc struct {
+	CountryName   string `bson:"country_name"`
+	CountryCode   string `bson:"country_code"`
+	CountryPrefix string `bson:"country_prefix"`
+	Active        bool   `bson:"active"`
 }
