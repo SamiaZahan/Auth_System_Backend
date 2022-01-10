@@ -130,12 +130,12 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		if err = session.StartTransaction(txnOpts); err != nil {
 			return err
 		}
-		authRepo = repository.Auth{Ctx: sessionContext}
-		_, err = authRepo.CreateUser(data.user.email, hashedPassword)
+		AuthRepo := repository.Auth{Ctx: sessionContext}
+		_, err = AuthRepo.CreateUser(data.user.email, hashedPassword)
 		if err != nil {
 			return err
 		}
-		err = authRepo.CreateUserProfile(data.user.userId, data.user.firstName, data.user.lastName)
+		err = AuthRepo.CreateUserProfile(data.user.userId, data.user.firstName, data.user.lastName)
 		if err != nil {
 			return err
 		}
