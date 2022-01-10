@@ -15,7 +15,7 @@ func (app *App) Bootstrap() {
 	}
 	app.Mongo = &mongo
 
-	if _, err := mongo.Connect(); err != nil {
+	if err := mongo.Connect(); err != nil {
 		log.Fatal(err.Error())
 		return
 	}

@@ -33,7 +33,6 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	authRepo := repository.Auth{Ctx: ctx}
-	mongoDb := repository.Mongo{}
 
 	//input.EmailOrMobile check is email??
 	err := validation.Validate(input.EmailOrMobile, is.Email)
@@ -119,11 +118,10 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 	wc := writeconcern.New(writeconcern.WMajority())
 	rc := readconcern.Snapshot()
 	txnOpts := options.Transaction().SetWriteConcern(wc).SetReadConcern(rc)
-	MongoClient, err := mongoDb.Connect()
 	if err != nil {
 		panic(err)
 	}
-	session, err := MongoClient.StartSession()
+	session, err := repository.MongoClient.StartSession()
 	if err != nil {
 		log.Fatal(err)
 	}

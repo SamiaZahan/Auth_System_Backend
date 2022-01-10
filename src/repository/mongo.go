@@ -12,7 +12,7 @@ type Mongo struct {
 	DBName  string
 }
 
-func (m *Mongo) Connect() (MongoClient *mongo.Client, err error) {
+func (m *Mongo) Connect() (err error) {
 	clientOptions := options.Client().ApplyURI(m.ConnURI)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -25,7 +25,7 @@ func (m *Mongo) Connect() (MongoClient *mongo.Client, err error) {
 
 	MongoClient = client
 	DB = client.Database(m.DBName)
-	return MongoClient, err
+	return
 }
 
 func (m *Mongo) Disconnect() (err error) {
