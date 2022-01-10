@@ -14,6 +14,7 @@ var (
 
 const UserCollection = "user"
 const UserProfileCollection = "user_profile"
+
 const VerificationCollection = "verification"
 const PhoneNumberMapCollection = "phone_number_map"
 

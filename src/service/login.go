@@ -92,14 +92,14 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 	}
 
 	type Response struct {
-		status  bool
-		message string
+		status  bool   `json:"status"`
+		message string `json:"message"`
 		user    struct {
-			userId    string
-			email     string
-			firstName string
-			lastName  string
-		}
+			userId    string `json:"user_id"`
+			email     string `json:"email"`
+			firstName string `json:"first_name"`
+			lastName  string `json:"last_name"`
+		} `json:"user"`
 	}
 	var data Response
 	_ = json.Unmarshal([]byte(body), &data)
@@ -147,6 +147,12 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 
 		return nil
 	})
+	if err != nil {
+		if abortErr := session.AbortTransaction(context.Background()); abortErr != nil {
+			panic(abortErr)
+		}
+		panic(err)
+	}
 
 	code, inputMarshalError := json.Marshal(input)
 
