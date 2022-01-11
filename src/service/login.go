@@ -44,9 +44,6 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 	//input.EmailOrMobile check is email??
 	err := validation.Validate(input.EmailOrMobile, is.Email)
 	if err != nil {
-		if input.CountryPrefix == "" {
-			return LoginResponse{Error: errors.New("Country Prefix Required")}
-		}
 		phoneNumberMap, err := authRepo.GetInfoByCountryPrefix(input.CountryPrefix)
 		if err != nil {
 			return LoginResponse{Error: errors.New("Not a valid Country Prefix")}
