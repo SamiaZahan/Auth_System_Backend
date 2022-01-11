@@ -34,6 +34,7 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 	authRepo := repository.Auth{Ctx: ctx}
 	comparePassword := ComparePassword{}
 
+	// input modify for force login
 	modifiedInput := map[string]string{
 		"email_or_mobile": input.EmailOrMobile,
 		"password":        input.Password,
@@ -61,86 +62,93 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 	}
 	// try to get existing user
 	existingUser, err := authRepo.GetUserByEmailOrMobile(input.EmailOrMobile)
+
+	if err == nil {
+		passwordMatched := comparePassword.ComparePasswords(existingUser.Password, []byte(input.Password))
+
+		if passwordMatched {
+			return LoginResponse{
+				Redirect: true,
+				Code:     b64.StdEncoding.EncodeToString([]byte(code)),
+				Error:    inputMarshalError,
+			}
+		}
+		if !passwordMatched {
+			return LoginResponse{Error: errors.New("Wrong Password")}
+		}
+
+	}
 	if err != nil {
 		if err != mongo.ErrNoDocuments {
 			return LoginResponse{Error: errors.New("User not found")}
 		}
 		log.Error(err.Error())
-		return LoginResponse{Error: genericLoginFailureMsg}
-	}
+		//return LoginResponse{Error: errors.New("Ekhan theke")}
 
-	passwordMatched := comparePassword.ComparePasswords(existingUser.Password, []byte(input.Password))
+		//Lookup in Old DB
+		doesUserExists := DoesUserExists{}
+		response := doesUserExists.DoesUserExists(input.EmailOrMobile, input.Password)
 
-	if passwordMatched {
+		if !response.UserExists {
+			return LoginResponse{Error: errors.New("Not an  User. Please Sign Up")}
+		}
+		if !response.PassValid {
+			return LoginResponse{Error: errors.New("Wrong Password")}
+		}
+
+		hashedPassword, passwordHasingError := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.MinCost)
+		if err != nil {
+			log.Error(passwordHasingError.Error())
+			return
+		}
+
+		//Transaction
+		wc := writeconcern.New(writeconcern.WMajority())
+		rc := readconcern.Snapshot()
+		txnOpts := options.Transaction().SetWriteConcern(wc).SetReadConcern(rc)
+		if err != nil {
+			panic(err)
+		}
+		insertUser := func(sessionContext mongo.SessionContext) (i interface{}, err error) {
+			AuthRepo := repository.Auth{Ctx: sessionContext}
+			_, err = AuthRepo.CreateUser(response.User.Email, string(hashedPassword))
+			if err != nil {
+				return
+			}
+
+			//splitting username
+			name := response.User.Name
+			lastName := name[strings.LastIndex(name, " ")+1:]
+			firstName := strings.TrimSuffix(name, lastName)
+
+			err = AuthRepo.CreateUserProfile(response.User.UserId, firstName, lastName)
+			if err != nil {
+				return
+			}
+			if err != nil {
+				return
+			}
+			return
+		}
+
+		var session mongo.Session
+		if session, err = repository.MongoClient.StartSession(); err != nil {
+			log.Error(err.Error())
+			return LoginResponse{Error: genericLoginFailureMsg}
+		}
+		defer session.EndSession(context.Background())
+
+		if _, err = session.WithTransaction(context.Background(), insertUser, txnOpts); err != nil {
+			log.Error(err.Error())
+			return LoginResponse{Error: genericLoginFailureMsg}
+		}
+
 		return LoginResponse{
 			Redirect: true,
 			Code:     b64.StdEncoding.EncodeToString([]byte(code)),
 			Error:    inputMarshalError,
 		}
-	}
-
-	//Lookup in Old DB
-	doesUserExists := DoesUserExists{}
-	response := doesUserExists.DoesUserExists(input.EmailOrMobile, input.Password)
-
-	if !response.UserExists {
-		return LoginResponse{Error: errors.New("Not an  User. Please Sign Up")}
-	}
-	if !response.PassValid {
-		return LoginResponse{Error: errors.New("Wrong Password")}
-	}
-
-	hashedPassword, passwordHasingError := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.MinCost)
-	if err != nil {
-		log.Error(passwordHasingError.Error())
 		return
-	}
-
-	//Transaction
-	wc := writeconcern.New(writeconcern.WMajority())
-	rc := readconcern.Snapshot()
-	txnOpts := options.Transaction().SetWriteConcern(wc).SetReadConcern(rc)
-	if err != nil {
-		panic(err)
-	}
-	insertUser := func(sessionContext mongo.SessionContext) (i interface{}, err error) {
-		AuthRepo := repository.Auth{Ctx: sessionContext}
-		_, err = AuthRepo.CreateUser(response.User.Email, string(hashedPassword))
-		if err != nil {
-			return
-		}
-
-		//splitting username
-		name := response.User.Name
-		lastName := name[strings.LastIndex(name, " ")+1:]
-		firstName := strings.TrimSuffix(name, lastName)
-
-		err = AuthRepo.CreateUserProfile(response.User.UserId, firstName, lastName)
-		if err != nil {
-			return
-		}
-		if err != nil {
-			return
-		}
-		return
-	}
-
-	var session mongo.Session
-	if session, err = repository.MongoClient.StartSession(); err != nil {
-		log.Error(err.Error())
-		return LoginResponse{Error: genericLoginFailureMsg}
-	}
-	defer session.EndSession(context.Background())
-
-	if _, err = session.WithTransaction(context.Background(), insertUser, txnOpts); err != nil {
-		log.Error(err.Error())
-		return LoginResponse{Error: genericLoginFailureMsg}
-	}
-
-	return LoginResponse{
-		Redirect: true,
-		Code:     b64.StdEncoding.EncodeToString([]byte(code)),
-		Error:    inputMarshalError,
 	}
 	return
 }
