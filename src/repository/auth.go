@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 	"time"
 
@@ -67,17 +66,6 @@ func (a *Auth) HashPassword(password string) (hashedPass string, err error) {
 		return
 	}
 	return string(hash), nil
-}
-
-func (a *Auth) ComparePasswords(hashedPwd string, plainPwd []byte) bool {
-	byteHash := []byte(hashedPwd)
-	err := bcrypt.CompareHashAndPassword(byteHash, plainPwd)
-	if err != nil {
-		log.Error(err)
-		return false
-	}
-
-	return true
 }
 
 func (a *Auth) GetUserByEmail(email string) (user *UserDoc, err error) {

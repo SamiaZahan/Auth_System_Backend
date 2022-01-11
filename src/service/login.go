@@ -4,14 +4,12 @@ import (
 	"context"
 	b64 "encoding/base64"
 	"encoding/json"
-	"fmt"
-	"github.com/emamulandalib/airbringr-auth/config"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readconcern"
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
+	"golang.org/x/crypto/bcrypt"
 	"time"
 
 	"github.com/emamulandalib/airbringr-auth/dto"
@@ -33,6 +31,7 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	authRepo := repository.Auth{Ctx: ctx}
+	comparePassword := ComparePassword{}
 
 	//input.EmailOrMobile check is email??
 	err := validation.Validate(input.EmailOrMobile, is.Email)
@@ -47,7 +46,7 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		countryCode := phoneNumberMap.CountryCode
 		//check valid phone number
 		phoneValidate := PhoneValidate{}
-		valid, _ := phoneValidate.ValidatePhoneNumber(input.EmailOrMobile, countryCode)
+		valid, _ := phoneValidate.Validate(input.EmailOrMobile, countryCode)
 		if !valid {
 			return LoginResponse{Error: errors.New("Not a Valid Phone Number")}
 		}
@@ -63,52 +62,30 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		return LoginResponse{Error: genericLoginFailureMsg}
 	}
 
-	passwordMatched := authRepo.ComparePasswords(existingUser.Password, []byte(input.Password))
+	passwordMatched := comparePassword.ComparePasswords(existingUser.Password, []byte(input.Password))
 
 	if passwordMatched {
 		code, inputMarshalError := json.Marshal(input)
-
 		return LoginResponse{
 			Redirect: true,
 			Code:     b64.StdEncoding.EncodeToString([]byte(code)),
 			Error:    inputMarshalError,
 		}
-
 	}
 
 	//Lookup in Old DB
-	doesUserExistsURI := fmt.Sprintf("%s/does-user-exists/?code=%s", config.Params.AirBringrDomain, res.Code)
-	statusCode, body, errs := fiber.
-		Post(doesUserExistsURI).
-		JSON(fiber.Map{
-			"emailOrMobile": input.EmailOrMobile,
-			"password":      input.Password,
-		}).String()
-	if statusCode != fiber.StatusOK {
-		log.Error(errs)
-		res.Error = errors.New("Failed to login")
-		return res
-	}
+	doesUserExists := DoesUserExists{}
+	response := doesUserExists.DoesUserExists(input.EmailOrMobile)
 
-	type Response struct {
-		status  bool   `json:"status"`
-		message string `json:"message"`
-		user    struct {
-			userId    string `json:"user_id"`
-			email     string `json:"email"`
-			firstName string `json:"first_name"`
-			lastName  string `json:"last_name"`
-		} `json:"user"`
-	}
-	var data Response
-	_ = json.Unmarshal([]byte(body), &data)
-
-	if !data.status {
+	if !response.status {
 		res.Error = errors.New("Not an  User. Please Sign Up")
 		return res
 	}
-
-	hashedPassword, passwordHasingError := authRepo.HashPassword(input.Password)
+	passwordMatched = comparePassword.ComparePasswords(response.user.password, []byte(input.Password))
+	if !passwordMatched {
+		return LoginResponse{Error: errors.New("Wrong Password")}
+	}
+	hashedPassword, passwordHasingError := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.MinCost)
 	if err != nil {
 		log.Error(passwordHasingError.Error())
 		return
@@ -121,14 +98,13 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 	if err != nil {
 		panic(err)
 	}
-
 	insertUser := func(sessionContext mongo.SessionContext) (i interface{}, err error) {
 		AuthRepo := repository.Auth{Ctx: sessionContext}
-		_, err = AuthRepo.CreateUser(data.user.email, hashedPassword)
+		_, err = AuthRepo.CreateUser(response.user.email, string(hashedPassword))
 		if err != nil {
 			return
 		}
-		err = AuthRepo.CreateUserProfile(data.user.userId, data.user.firstName, data.user.lastName)
+		err = AuthRepo.CreateUserProfile(response.user.userId, response.user.firstName, response.user.lastName)
 		if err != nil {
 			return
 		}
@@ -151,12 +127,10 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 	}
 
 	code, inputMarshalError := json.Marshal(input)
-
 	return LoginResponse{
 		Redirect: true,
 		Code:     b64.StdEncoding.EncodeToString([]byte(code)),
 		Error:    inputMarshalError,
 	}
-
 	return
 }
