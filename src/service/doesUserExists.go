@@ -11,24 +11,24 @@ import (
 type DoesUserExists struct{}
 
 type ResponseData struct {
-	status  bool   `json:"status"`
-	message string `json:"message"`
-	user    struct {
-		userId    string `json:"user_id"`
-		email     string `json:"email"`
-		phone     string `json:"phone"`
-		password  string `json:"password"`
-		firstName string `json:"first_name"`
-		lastName  string `json:"last_name"`
-	} `json:"user"`
+	UserExists bool   `json:"user_exists"`
+	PassValid  bool   `json:"pass_valid"`
+	Message    string `json:"message"`
+	User       struct {
+		UserId string `json:"id"`
+		Name   string `json:"name"`
+		Phone  string `json:"phone"`
+		Email  string `json:"email"`
+	} `json:"user_profile"`
 }
 
-func (d *DoesUserExists) DoesUserExists(emailOrMobile string) (resData ResponseData) {
+func (d *DoesUserExists) DoesUserExists(emailOrMobile string, password string) (resData ResponseData) {
 	doesUserExistsURI := fmt.Sprintf("%s/does_user_exists", config.Params.AirBringrDomain)
 	statusCode, body, errs := fiber.
 		Post(doesUserExistsURI).
 		JSON(fiber.Map{
 			"emailOrMobile": emailOrMobile,
+			"password":      password,
 		}).String()
 	if statusCode != fiber.StatusOK {
 		log.Error(errs)

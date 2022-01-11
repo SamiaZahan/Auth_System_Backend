@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readconcern"
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 	"golang.org/x/crypto/bcrypt"
+	"strings"
 	"time"
 
 	"github.com/emamulandalib/airbringr-auth/dto"
@@ -32,6 +33,12 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 	defer cancel()
 	authRepo := repository.Auth{Ctx: ctx}
 	comparePassword := ComparePassword{}
+
+	modifiedInput := map[string]string{
+		"email_or_mobile": input.EmailOrMobile,
+		"password":        input.Password,
+	}
+	code, inputMarshalError := json.Marshal(modifiedInput)
 
 	//input.EmailOrMobile check is email??
 	err := validation.Validate(input.EmailOrMobile, is.Email)
@@ -65,7 +72,6 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 	passwordMatched := comparePassword.ComparePasswords(existingUser.Password, []byte(input.Password))
 
 	if passwordMatched {
-		code, inputMarshalError := json.Marshal(input)
 		return LoginResponse{
 			Redirect: true,
 			Code:     b64.StdEncoding.EncodeToString([]byte(code)),
@@ -75,16 +81,15 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 
 	//Lookup in Old DB
 	doesUserExists := DoesUserExists{}
-	response := doesUserExists.DoesUserExists(input.EmailOrMobile)
+	response := doesUserExists.DoesUserExists(input.EmailOrMobile, input.Password)
 
-	if !response.status {
-		res.Error = errors.New("Not an  User. Please Sign Up")
-		return res
+	if !response.UserExists {
+		return LoginResponse{Error: errors.New("Not an  User. Please Sign Up")}
 	}
-	passwordMatched = comparePassword.ComparePasswords(response.user.password, []byte(input.Password))
-	if !passwordMatched {
+	if !response.PassValid {
 		return LoginResponse{Error: errors.New("Wrong Password")}
 	}
+
 	hashedPassword, passwordHasingError := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.MinCost)
 	if err != nil {
 		log.Error(passwordHasingError.Error())
@@ -100,11 +105,17 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 	}
 	insertUser := func(sessionContext mongo.SessionContext) (i interface{}, err error) {
 		AuthRepo := repository.Auth{Ctx: sessionContext}
-		_, err = AuthRepo.CreateUser(response.user.email, string(hashedPassword))
+		_, err = AuthRepo.CreateUser(response.User.Email, string(hashedPassword))
 		if err != nil {
 			return
 		}
-		err = AuthRepo.CreateUserProfile(response.user.userId, response.user.firstName, response.user.lastName)
+
+		//splitting username
+		name := response.User.Name
+		lastName := name[strings.LastIndex(name, " ")+1:]
+		firstName := strings.TrimSuffix(name, lastName)
+
+		err = AuthRepo.CreateUserProfile(response.User.UserId, firstName, lastName)
 		if err != nil {
 			return
 		}
@@ -126,7 +137,6 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		return LoginResponse{Error: genericLoginFailureMsg}
 	}
 
-	code, inputMarshalError := json.Marshal(input)
 	return LoginResponse{
 		Redirect: true,
 		Code:     b64.StdEncoding.EncodeToString([]byte(code)),
