@@ -24,6 +24,7 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 	if err != nil && err != mongo.ErrNoDocuments {
 		log.Error(err.Error())
 		return genericSignupFailureMsg
+
 	}
 	if existingUser != nil {
 		return errors.New("An user with this email is already exist.")
@@ -40,17 +41,20 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 		Id:     input.Email,
 	}); err != nil {
 		return genericSignupFailureMsg
+
 	}
+
+	log.Print(otp)
 
 	createVerificationLink := func(sessCtx mongo.SessionContext) (i interface{}, err error) {
 		var userID string
 		AuthRpo := repository.Auth{Ctx: sessCtx}
-		hashedPassword, passwordHasingError := authRepo.HashPassword(input.Password)
+		hashedPassword, passwordHashingError := authRepo.HashPassword(input.Password)
 		if err != nil {
-			log.Error(passwordHasingError.Error())
+			log.Error(passwordHashingError.Error())
 			return
 		}
-		if userID, err = AuthRpo.CreateUser(input.Email, hashedPassword); err != nil {
+		if userID, err = AuthRpo.CreateUser(input.Email, hashedPassword, input.Mobile); err != nil {
 			return
 		}
 		if err = AuthRpo.CreateUserProfile(userID, input.FirstName, input.LastName); err != nil {

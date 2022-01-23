@@ -80,7 +80,6 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 			return LoginResponse{Error: errors.New("User not found")}
 		}
 		log.Error(err.Error())
-		//return LoginResponse{Error: errors.New("Ekhan theke")}
 
 		//Lookup in Old DB
 		doesUserExists := DoesUserExists{}
@@ -94,7 +93,7 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		}
 
 		hashedPassword, passwordHasingError := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.MinCost)
-		if err != nil {
+		if passwordHasingError != nil {
 			log.Error(passwordHasingError.Error())
 			return
 		}
@@ -103,22 +102,22 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		wc := writeconcern.New(writeconcern.WMajority())
 		rc := readconcern.Snapshot()
 		txnOpts := options.Transaction().SetWriteConcern(wc).SetReadConcern(rc)
-		if err != nil {
-			panic(err)
-		}
+		//if err != nil {
+		//	panic(err)
+		//}
 		insertUser := func(sessionContext mongo.SessionContext) (i interface{}, err error) {
 			AuthRepo := repository.Auth{Ctx: sessionContext}
-			_, err = AuthRepo.CreateUser(response.User.Email, string(hashedPassword))
+			_, err = AuthRepo.CreateUser(response.User[0].Email, string(hashedPassword), response.User[0].Phone)
 			if err != nil {
 				return
 			}
 
 			//splitting username
-			name := response.User.Name
+			name := response.User[0].Name
 			lastName := name[strings.LastIndex(name, " ")+1:]
 			firstName := strings.TrimSuffix(name, lastName)
 
-			err = AuthRepo.CreateUserProfile(response.User.UserId, firstName, lastName)
+			err = AuthRepo.CreateUserProfile(string(response.User[0].UserId), firstName, lastName)
 			if err != nil {
 				return
 			}
