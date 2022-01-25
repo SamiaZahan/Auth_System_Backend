@@ -2,13 +2,10 @@ package handler
 
 import (
 	"errors"
-	"fmt"
-	"github.com/emamulandalib/airbringr-auth/config"
 	"github.com/emamulandalib/airbringr-auth/dto"
 	"github.com/emamulandalib/airbringr-auth/response"
 	"github.com/emamulandalib/airbringr-auth/service"
 	"github.com/gofiber/fiber/v2"
-	log "github.com/sirupsen/logrus"
 )
 
 func (h *Handler) Login(c *fiber.Ctx) error {
@@ -32,16 +29,17 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 
 	svc := service.Auth{}
 	res := svc.Login(*input)
-	log.Print(res.Code)
+	//log.Print(res.Code)
 	if res.Redirect {
-		err = c.Redirect(fmt.Sprintf("%s/forced-login/?code=%s", config.Params.AirBringrDomain, res.Code))
-		if err != nil {
-			log.Error(err.Error())
-			return c.Status(fiber.StatusBadRequest).JSON(response.Payload{
-				Message: "Failed to Login",
-				Errors:  err,
-			})
-		}
+		return c.JSON(response.Payload{Message: "Done"})
+		//err = c.Redirect(fmt.Sprintf("%s/forced-login/?code=%s", config.Params.AirBringrDomain, res.Code))
+		//if err != nil {
+		//	log.Error(err.Error())
+		//	return c.Status(fiber.StatusBadRequest).JSON(response.Payload{
+		//		Message: "Failed to Login",
+		//		Errors:  err,
+		//	})
+		//}
 	}
 
 	if res.Error != nil {

@@ -27,11 +27,11 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 
 	}
 	if existingUser != nil {
-		return errors.New("An user with this email is already exist.")
+		return errors.New("An user with this email already exists.")
 	}
 
 	if ExistingEmail(input.Email) {
-		return errors.New("An user with this email is already exist.")
+		return errors.New("An user with this email already exists.")
 	}
 
 	var otp string
@@ -82,8 +82,8 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 
 func (a *Auth) SendEmail(email string, otp string) error {
 	emailSvcURI := fmt.Sprintf("%s/v1/send-email", config.Params.NotificationSvcDomain)
-	verificationLink := fmt.Sprintf("%s/verification/?otp=%s&auth=%s", config.Params.ServiceFrontend, otp, email)
-
+	//verificationLink := fmt.Sprintf("%s/verification/?otp=%s&auth=%s", config.Params.ServiceFrontend, otp, email)
+	var verificationLink = "http://localhost:3000/verification/?otp= 225933&auth=samia.airbringr@gmail.com"
 	if code, _, errs := fiber.
 		Post(emailSvcURI).
 		JSON(fiber.Map{
