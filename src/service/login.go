@@ -107,7 +107,8 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		//}
 		insertUser := func(sessionContext mongo.SessionContext) (i interface{}, err error) {
 			AuthRepo := repository.Auth{Ctx: sessionContext}
-			_, err = AuthRepo.CreateUser(response.User[0].Email, string(hashedPassword), response.User[0].Phone)
+			var number dto.SendSmsOtpInput
+			_, err = AuthRepo.CreateUser(response.User[0].Email, string(hashedPassword), number.Mobile)
 			if err != nil {
 				return
 			}

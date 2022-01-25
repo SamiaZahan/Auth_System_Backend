@@ -25,11 +25,11 @@ func ExistingEmail(email string) (exists bool) {
 		}).
 		String(); code != fiber.StatusOK {
 		log.Error(errs)
-		exists = false
+		exists = true
 		return
 	}
 
-	exists = true
+	exists = false
 	return
 }
 

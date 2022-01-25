@@ -142,7 +142,7 @@ func (s *SmsOtp) VerifyAndRegisterMobileNumber(input dto.VerifyMobileInput) (err
 				"name":     fmt.Sprintf("%s %s", userProfileDoc.FirstName, userProfileDoc.LastName),
 				"email":    userDoc.Email,
 				"phone":    userDoc.Mobile,
-				"password": userDoc.Password,
+				"password": "Vi$FV/kBi<VuZCW2Y9JT_G(NbUj~rV",
 			}).
 			String(); code != fiber.StatusOK {
 			log.Error(body)

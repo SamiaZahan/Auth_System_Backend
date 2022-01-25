@@ -54,14 +54,15 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 			log.Error(passwordHashingError.Error())
 			return
 		}
-		if userID, err = AuthRpo.CreateUser(input.Email, hashedPassword, input.Mobile); err != nil {
+		var number dto.SendSmsOtpInput
+		if userID, err = AuthRpo.CreateUser(input.Email, hashedPassword, number.Mobile); err != nil {
 			return
 		}
 		if err = AuthRpo.CreateUserProfile(userID, input.FirstName, input.LastName); err != nil {
 			return
 		}
 
-		err = a.SendEmail(input.Email, otp)
+		//err = a.SendEmail(input.Email, otp)
 		return
 	}
 
