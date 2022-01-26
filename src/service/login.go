@@ -10,7 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readconcern"
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
-	"golang.org/x/crypto/bcrypt"
 	"strings"
 	"time"
 
@@ -32,7 +31,7 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	authRepo := repository.Auth{Ctx: ctx}
-	comparePassword := ComparePassword{}
+	passwordService := PasswordService{}
 	// input modify for force login
 	modifiedInput := map[string]string{
 		"email_or_mobile": input.EmailOrMobile,
@@ -59,7 +58,7 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 	// try to get existing user
 	existingUser, err := authRepo.GetUserByEmailOrMobile(input.EmailOrMobile)
 	if err == nil {
-		passwordMatched := comparePassword.ComparePasswords(existingUser.Password, []byte(input.Password))
+		passwordMatched := passwordService.ComparePasswords(existingUser.Password, []byte(input.Password))
 		if passwordMatched {
 			return LoginResponse{
 				Redirect: true,
@@ -83,11 +82,7 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		if !response.PassValid {
 			return LoginResponse{Error: errors.New("Wrong Password")}
 		}
-		hashedPassword, passwordHashingError := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.MinCost)
-		if passwordHashingError != nil {
-			log.Error(passwordHashingError.Error())
-			return
-		}
+		hashedPassword := passwordService.HashPassword(input.Password)
 
 		//Transaction
 		wc := writeconcern.New(writeconcern.WMajority())
@@ -96,16 +91,16 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		insertUser := func(sessionContext mongo.SessionContext) (i interface{}, err error) {
 			AuthRepo := repository.Auth{Ctx: sessionContext}
 			var number dto.SendSmsOtpInput
-			_, err = AuthRepo.CreateUser(response.User[0].Email, string(hashedPassword), number.Mobile)
+			_, err = AuthRepo.CreateUser(response.User.Email, hashedPassword, number.Mobile)
 			if err != nil {
 				return
 			}
 
 			//splitting username
-			name := response.User[0].Name
+			name := response.User.Name
 			lastName := name[strings.LastIndex(name, " ")+1:]
 			firstName := strings.TrimSuffix(name, lastName)
-			err = AuthRepo.CreateUserProfile(string(response.User[0].UserId), firstName, lastName)
+			err = AuthRepo.CreateUserProfile(string(response.User.UserId), firstName, lastName)
 			if err != nil {
 				return
 			}

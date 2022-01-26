@@ -14,7 +14,7 @@ type ResponseData struct {
 	UserExists bool   `json:"user_exists"`
 	PassValid  bool   `json:"pass_valid"`
 	Message    string `json:"message"`
-	User       []User `json:"user_profile"`
+	User       User   `json:"user_profile"`
 }
 type User struct {
 	UserId int    `json:"id"`

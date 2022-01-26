@@ -11,7 +11,7 @@ import (
 
 type PhoneNumberValidateService struct{}
 
-type ApiResponseData struct {
+type PhoneNumberApiResponseData struct {
 	Valid               bool   `json:"valid"`
 	Number              string `json:"number"`
 	LocalFormat         string `json:"local_format"`
@@ -34,7 +34,7 @@ func (p *PhoneNumberValidateService) Validate(phoneNumber string, countryCode st
 		err = errors.New("Something is wrong while phone number validation check")
 		return
 	}
-	var resData ApiResponseData
+	var resData PhoneNumberApiResponseData
 	_ = json.Unmarshal([]byte(body), &resData)
 	valid = resData.Valid
 	return
