@@ -38,6 +38,27 @@ func (a *Auth) GetUserProfileByID(ID string) (user *UserProfileDoc, err error) {
 	return
 }
 
+// GetInfoByCountryPrefix Get Country Code
+func (a *Auth) GetInfoByCountryPrefix(countryPrefix string) (phoneNumberMap *PhoneNumberMapDoc, err error) {
+	col := DB.Collection(PhoneNumberMapCollection)
+	err = col.FindOne(a.Ctx, bson.D{{Key: "country_prefix", Value: countryPrefix}}).Decode(&phoneNumberMap)
+	return
+}
+
+// GetUserByEmailOrMobile get user  by email or mobile
+func (a *Auth) GetUserByEmailOrMobile(emailOrMobile string) (user *UserDoc, err error) {
+	col := DB.Collection(UserCollection)
+	err = col.FindOne(
+		a.Ctx,
+		bson.D{{"$or", bson.A{
+			bson.D{{Key: "email", Value: emailOrMobile}},
+			bson.D{{Key: "mobile", Value: emailOrMobile}},
+		},
+		}},
+	).Decode(&user)
+	return
+}
+
 func (a *Auth) GetUserByEmail(email string) (user *UserDoc, err error) {
 	col := DB.Collection(UserCollection)
 	err = col.FindOne(a.Ctx, bson.D{{Key: "email", Value: email}}).Decode(&user)
@@ -50,13 +71,16 @@ func (a *Auth) GetUserByMobile(mobile string) (user *UserDoc, err error) {
 	return
 }
 
-func (a *Auth) CreateUser(email string) (ID string, err error) {
+func (a *Auth) CreateUser(email string, password string, mobile string) (ID string, err error) {
 	col := DB.Collection(UserCollection)
 	res, err := col.InsertOne(a.Ctx, UserDoc{
-		ID:      primitive.NewObjectID(),
-		Email:   email,
-		Active:  false,
-		Created: time.Now(),
+		ID:       primitive.NewObjectID(),
+		Email:    email,
+		Password: password,
+		Mobile:   mobile,
+		Active:   false,
+		Created:  time.Now(),
+		Updated:  time.Now(),
 	})
 
 	if err != nil {
@@ -76,6 +100,7 @@ func (a *Auth) CreateUserProfile(userID string, firstName string, lastName strin
 		FirstName: firstName,
 		LastName:  lastName,
 		Created:   time.Now(),
+		Updated:   time.Now(),
 	})
 	return
 }

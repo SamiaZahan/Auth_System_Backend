@@ -25,7 +25,7 @@ func (m *Mongo) Connect() (err error) {
 
 	MongoClient = client
 	DB = client.Database(m.DBName)
-	return nil
+	return
 }
 
 func (m *Mongo) Disconnect() (err error) {

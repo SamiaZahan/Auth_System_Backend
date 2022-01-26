@@ -29,6 +29,7 @@ func init() {
 }
 
 func main() {
+
 	config.New()
 	App := app.New()
 	App.Bootstrap()
@@ -38,7 +39,6 @@ func main() {
 	server := fiber.New(fiber.Config{
 		IdleTimeout: idleTimeout,
 	})
-
 
 	// setup middlewares
 	server.Use(requestid.New())

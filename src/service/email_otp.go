@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"time"
 
 	"github.com/emamulandalib/airbringr-auth/config"
 	"github.com/emamulandalib/airbringr-auth/dto"
 	"github.com/emamulandalib/airbringr-auth/repository"
 	"github.com/gofiber/fiber/v2"
-	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -43,9 +43,9 @@ func (e *EmailOtp) Send(input dto.EmailOtpInput) (err error) {
 		log.Error(err.Error())
 		return genericFailureMsg
 	}
-	
+
 	emailSvcURI := fmt.Sprintf("%s/v1/send-email", config.Params.NotificationSvcDomain)
-	
+
 	if code, _, errs := fiber.
 		Post(emailSvcURI).
 		JSON(fiber.Map{
@@ -60,7 +60,7 @@ func (e *EmailOtp) Send(input dto.EmailOtpInput) (err error) {
 		}).
 		String(); code != fiber.StatusOK {
 		log.Error(errs)
-		return errors.New("falied to send SMS")
+		return errors.New("failed to send SMS")
 	}
 
 	return

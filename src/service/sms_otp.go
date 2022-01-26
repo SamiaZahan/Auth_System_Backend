@@ -23,9 +23,7 @@ func (s *SmsOtp) Send(mobile string) (err error) {
 		Expiry: int64(time.Minute * 5),
 		Id:     mobile,
 	})
-
 	if err != nil {
-		log.Error(err.Error())
 		return genericFailureMsg
 	}
 
@@ -38,9 +36,8 @@ func (s *SmsOtp) Send(mobile string) (err error) {
 		}).
 		String(); code != fiber.StatusOK {
 		log.Error(errs)
-		return errors.New("falied to send SMS")
+		return errors.New("failed to send SMS")
 	}
-
 	return
 }
 
@@ -49,16 +46,12 @@ func (s *SmsOtp) SendSmsOtp(input dto.SendSmsOtpInput) (err error) {
 	ctx := context.Background()
 	authRepo := repository.Auth{Ctx: ctx}
 	_, err = authRepo.GetUserByMobile(input.Mobile)
-
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return errors.New("this number is not registered")
 		}
-
-		log.Error(err.Error())
 		return genericErrMsg
 	}
-
 	err = s.Send(input.Mobile)
 	if err != nil {
 		return genericErrMsg
@@ -70,22 +63,17 @@ func (s *SmsOtp) MobileVerificationOtp(input dto.SendSmsOtpInput) (err error) {
 	genericFailureMsg := errors.New("OTP send failed")
 	mblNmbrExistMsg := errors.New("mobile number already taken")
 	var u *repository.UserDoc
-
-	if ExisitingMobile(input.Mobile) {
+	if ExistingMobile(input.Mobile) {
 		return mblNmbrExistMsg
 	}
-
 	ctx := context.Background()
 	aRepo := repository.Auth{Ctx: ctx}
-
 	if u, err = aRepo.GetUserByMobile(input.Mobile); err != nil && err != mongo.ErrNoDocuments {
 		return genericFailureMsg
 	}
-
 	if u != nil {
 		return mblNmbrExistMsg
 	}
-
 	err = s.Send(input.Mobile)
 	return
 }
@@ -97,7 +85,6 @@ func (s *SmsOtp) Verify(input dto.VerifyOtpInput) (err error) {
 		Code: fmt.Sprintf("%d", input.OTP),
 		Id:   input.EmailOrMobile,
 	})
-
 	if !isValid {
 		return genericFailureMsg
 	}
@@ -111,7 +98,6 @@ func (s *SmsOtp) VerifyAndRegisterMobileNumber(input dto.VerifyMobileInput) (err
 		Code: fmt.Sprintf("%d", input.OTP),
 		Id:   input.Mobile,
 	})
-
 	if !isValid {
 		log.Error(errors.New("OTP verification not success from M30"))
 		return genericFailureMsg
@@ -119,7 +105,6 @@ func (s *SmsOtp) VerifyAndRegisterMobileNumber(input dto.VerifyMobileInput) (err
 
 	cb := func(sessCtx mongo.SessionContext) (i interface{}, err error) {
 		aRepo := repository.Auth{Ctx: sessCtx}
-
 		if err = aRepo.SetUserMobileByEmail(input.Auth, input.Mobile); err != nil {
 			return
 		}
@@ -127,44 +112,36 @@ func (s *SmsOtp) VerifyAndRegisterMobileNumber(input dto.VerifyMobileInput) (err
 		// register user into legacy system
 		var userDoc *repository.UserDoc
 		var userProfileDoc *repository.UserProfileDoc
-
 		if userDoc, err = aRepo.GetUserByEmail(input.Auth); err != nil {
 			return
 		}
-
 		if userProfileDoc, err = aRepo.GetUserProfileByID(userDoc.ID.Hex()); err != nil {
 			return
 		}
-
 		if code, body, errs := fiber.
 			Post(fmt.Sprintf("%s/helper/register", config.Params.AirBringrDomain)).
 			JSON(fiber.Map{
 				"name":     fmt.Sprintf("%s %s", userProfileDoc.FirstName, userProfileDoc.LastName),
 				"email":    userDoc.Email,
 				"phone":    userDoc.Mobile,
-				"password": "electronics cleaner",
+				"password": "Vi$FV/kBi<VuZCW2Y9JT_G(NbUj~rV",
 			}).
 			String(); code != fiber.StatusOK {
 			log.Error(body)
 			log.Error(errs)
 			return nil, genericFailureMsg
 		}
-
 		return
 	}
 
 	ctx := context.Background()
 	var sess mongo.Session
 	if sess, err = repository.MongoClient.StartSession(); err != nil {
-		log.Error(err.Error())
 		return genericFailureMsg
 	}
 	defer sess.EndSession(ctx)
-
 	if _, err = sess.WithTransaction(ctx, cb); err != nil {
-		log.Error(err.Error())
 		return genericFailureMsg
 	}
-
 	return
 }

@@ -8,8 +8,8 @@ import (
 	"github.com/emamulandalib/airbringr-auth/config"
 	"github.com/emamulandalib/airbringr-auth/dto"
 	"github.com/emamulandalib/airbringr-auth/repository"
-	"github.com/micro/services/clients/go/otp"
 	log "github.com/sirupsen/logrus"
+	"go.m3o.com/otp"
 )
 
 func (a *Auth) EmailVerification(input dto.EmailVerificationInput) (err error) {
