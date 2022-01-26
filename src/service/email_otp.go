@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"time"
 
 	"github.com/emamulandalib/airbringr-auth/config"
@@ -39,12 +40,13 @@ func (e *EmailOtp) Send(input dto.EmailOtpInput) (err error) {
 	})
 
 	if err != nil {
+		log.Error(err.Error())
 		return genericFailureMsg
 	}
 
 	emailSvcURI := fmt.Sprintf("%s/v1/send-email", config.Params.NotificationSvcDomain)
 
-	if code, _, _ := fiber.
+	if code, _, errs := fiber.
 		Post(emailSvcURI).
 		JSON(fiber.Map{
 			"data": fiber.Map{
@@ -57,7 +59,8 @@ func (e *EmailOtp) Send(input dto.EmailOtpInput) (err error) {
 			"template_code": "otp",
 		}).
 		String(); code != fiber.StatusOK {
-		return errors.New("falied to send SMS")
+		log.Error(errs)
+		return errors.New("failed to send SMS")
 	}
 
 	return

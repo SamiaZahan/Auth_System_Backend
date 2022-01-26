@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"golang.org/x/crypto/bcrypt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -74,14 +73,10 @@ func (a *Auth) GetUserByMobile(mobile string) (user *UserDoc, err error) {
 
 func (a *Auth) CreateUser(email string, password string, mobile string) (ID string, err error) {
 	col := DB.Collection(UserCollection)
-	hashedPassword, passwordHashingError := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
-	if passwordHashingError != nil {
-		return
-	}
 	res, err := col.InsertOne(a.Ctx, UserDoc{
 		ID:       primitive.NewObjectID(),
 		Email:    email,
-		Password: string(hashedPassword),
+		Password: password,
 		Mobile:   mobile,
 		Active:   false,
 		Created:  time.Now(),

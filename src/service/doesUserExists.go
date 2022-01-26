@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/emamulandalib/airbringr-auth/config"
 	"github.com/gofiber/fiber/v2"
+	log "github.com/sirupsen/logrus"
 )
 
 type DoesUserExists struct{}
@@ -24,13 +25,14 @@ type User struct {
 
 func (d *DoesUserExists) DoesUserExists(emailOrMobile string, password string) (resData ResponseData) {
 	doesUserExistsURI := fmt.Sprintf("%s/helper/does-user-exist", config.Params.AirBringrDomain)
-	statusCode, body, _ := fiber.
+	statusCode, body, errs := fiber.
 		Post(doesUserExistsURI).
 		JSON(fiber.Map{
 			"email_or_mobile": emailOrMobile,
 			"password":        password,
 		}).String()
 	if statusCode != fiber.StatusOK {
+		log.Error(errs)
 		return
 	}
 	_ = json.Unmarshal([]byte(body), &resData)

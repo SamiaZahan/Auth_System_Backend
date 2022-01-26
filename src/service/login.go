@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readconcern"
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
@@ -48,7 +49,7 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		}
 		countryCode := phoneNumberMap.CountryCode
 		//check valid phone number
-		phoneValidate := PhoneValidate{}
+		phoneValidate := PhoneNumberValidateService{}
 		valid, _ := phoneValidate.Validate(input.EmailOrMobile, countryCode)
 		if !valid {
 			return LoginResponse{Error: errors.New("Not a Valid Phone Number")}
@@ -72,6 +73,7 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		if err != mongo.ErrNoDocuments {
 			return LoginResponse{Error: errors.New("User not found")}
 		}
+		log.Error(err.Error())
 		//Lookup in Old DB
 		doesUserExists := DoesUserExists{}
 		response := doesUserExists.DoesUserExists(input.EmailOrMobile, input.Password)
@@ -83,6 +85,7 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		}
 		hashedPassword, passwordHashingError := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.MinCost)
 		if passwordHashingError != nil {
+			log.Error(passwordHashingError.Error())
 			return
 		}
 
@@ -114,10 +117,12 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 
 		var session mongo.Session
 		if session, err = repository.MongoClient.StartSession(); err != nil {
+			log.Error(err.Error())
 			return LoginResponse{Error: genericLoginFailureMsg}
 		}
 		defer session.EndSession(context.Background())
 		if _, err = session.WithTransaction(context.Background(), insertUser, txnOpts); err != nil {
+			log.Error(err.Error())
 			return LoginResponse{Error: genericLoginFailureMsg}
 		}
 		return LoginResponse{

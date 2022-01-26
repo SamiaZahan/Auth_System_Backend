@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"time"
 
 	"github.com/emamulandalib/airbringr-auth/config"
@@ -21,8 +22,8 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 	// try to get existing user
 	existingUser, err := authRepo.GetUserByEmail(input.Email)
 	if err != nil && err != mongo.ErrNoDocuments {
+		log.Error(err.Error())
 		return genericSignupFailureMsg
-
 	}
 	if existingUser != nil {
 		return errors.New("An user with this email already exists.")
@@ -57,11 +58,13 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 
 	var sess mongo.Session
 	if sess, err = repository.MongoClient.StartSession(); err != nil {
+		log.Error(err.Error())
 		return genericSignupFailureMsg
 	}
 	defer sess.EndSession(ctx)
 
 	if _, err = sess.WithTransaction(ctx, createVerificationLink); err != nil {
+		log.Error(err.Error())
 		return genericSignupFailureMsg
 	}
 
@@ -71,7 +74,7 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 func (a *Auth) SendEmail(email string, otp string) error {
 	emailSvcURI := fmt.Sprintf("%s/v1/send-email", config.Params.NotificationSvcDomain)
 	verificationLink := fmt.Sprintf("%s/verification/?otp=%s&auth=%s", config.Params.ServiceFrontend, otp, email)
-	if code, _, _ := fiber.
+	if code, _, errs := fiber.
 		Post(emailSvcURI).
 		JSON(fiber.Map{
 			"data": fiber.Map{
@@ -84,6 +87,7 @@ func (a *Auth) SendEmail(email string, otp string) error {
 			"template_code": "signup_verification",
 		}).
 		String(); code != fiber.StatusOK {
+		log.Error(errs)
 		return errors.New("Email send failed.")
 	}
 	return nil

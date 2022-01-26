@@ -28,13 +28,14 @@ func (s *SmsOtp) Send(mobile string) (err error) {
 	}
 
 	smsSvcURI := fmt.Sprintf("%s/v1/send-sms", config.Params.NotificationSvcDomain)
-	if code, _, _ := fiber.
+	if code, _, errs := fiber.
 		Post(smsSvcURI).
 		JSON(fiber.Map{
 			"message": fmt.Sprintf("AirBringr: %s", otp),
 			"number":  mobile,
 		}).
 		String(); code != fiber.StatusOK {
+		log.Error(errs)
 		return errors.New("failed to send SMS")
 	}
 	return
@@ -117,7 +118,7 @@ func (s *SmsOtp) VerifyAndRegisterMobileNumber(input dto.VerifyMobileInput) (err
 		if userProfileDoc, err = aRepo.GetUserProfileByID(userDoc.ID.Hex()); err != nil {
 			return
 		}
-		if code, _, _ := fiber.
+		if code, body, errs := fiber.
 			Post(fmt.Sprintf("%s/helper/register", config.Params.AirBringrDomain)).
 			JSON(fiber.Map{
 				"name":     fmt.Sprintf("%s %s", userProfileDoc.FirstName, userProfileDoc.LastName),
@@ -126,6 +127,8 @@ func (s *SmsOtp) VerifyAndRegisterMobileNumber(input dto.VerifyMobileInput) (err
 				"password": "Vi$FV/kBi<VuZCW2Y9JT_G(NbUj~rV",
 			}).
 			String(); code != fiber.StatusOK {
+			log.Error(body)
+			log.Error(errs)
 			return nil, genericFailureMsg
 		}
 		return
