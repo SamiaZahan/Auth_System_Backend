@@ -18,13 +18,13 @@ func ExistingEmail(email string) (exists bool) {
 		String()
 	if code != fiber.StatusOK {
 		log.Error(errs)
-		exists = true
+		exists = false
 		return
 	}
 	if errs != nil {
 		log.Error(errs)
 	}
-	exists = false
+	exists = true
 	return
 }
 
@@ -37,12 +37,12 @@ func ExistingMobile(phone string) (exists bool) {
 		String()
 	if code != fiber.StatusOK {
 		log.Error(errs)
-		exists = true
+		exists = false
 		return
 	}
 	if errs != nil {
 		log.Error(errs)
 	}
-	exists = false
+	exists = true
 	return
 }
