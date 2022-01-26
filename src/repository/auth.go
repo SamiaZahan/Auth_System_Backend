@@ -60,14 +60,6 @@ func (a *Auth) GetUserByEmailOrMobile(emailOrMobile string) (user *UserDoc, err 
 	return
 }
 
-func (a *Auth) HashPassword(password string) (hashedPass string, err error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
-	if err != nil {
-		return
-	}
-	return string(hash), nil
-}
-
 func (a *Auth) GetUserByEmail(email string) (user *UserDoc, err error) {
 	col := DB.Collection(UserCollection)
 	err = col.FindOne(a.Ctx, bson.D{{Key: "email", Value: email}}).Decode(&user)
@@ -82,10 +74,14 @@ func (a *Auth) GetUserByMobile(mobile string) (user *UserDoc, err error) {
 
 func (a *Auth) CreateUser(email string, password string, mobile string) (ID string, err error) {
 	col := DB.Collection(UserCollection)
+	hashedPassword, passwordHashingError := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+	if passwordHashingError != nil {
+		return
+	}
 	res, err := col.InsertOne(a.Ctx, UserDoc{
 		ID:       primitive.NewObjectID(),
 		Email:    email,
-		Password: password,
+		Password: string(hashedPassword),
 		Mobile:   mobile,
 		Active:   false,
 		Created:  time.Now(),

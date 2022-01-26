@@ -10,7 +10,6 @@ import (
 	"github.com/emamulandalib/airbringr-auth/repository"
 	"github.com/gofiber/fiber/v2"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -22,7 +21,6 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 	// try to get existing user
 	existingUser, err := authRepo.GetUserByEmail(input.Email)
 	if err != nil && err != mongo.ErrNoDocuments {
-		log.Error(err.Error())
 		return genericSignupFailureMsg
 
 	}
@@ -43,38 +41,27 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 		return genericSignupFailureMsg
 
 	}
-
-	log.Print(otp)
-
 	createVerificationLink := func(sessCtx mongo.SessionContext) (i interface{}, err error) {
 		var userID string
 		AuthRpo := repository.Auth{Ctx: sessCtx}
-		hashedPassword, passwordHashingError := authRepo.HashPassword(input.Password)
-		if err != nil {
-			log.Error(passwordHashingError.Error())
-			return
-		}
 		var number dto.SendSmsOtpInput
-		if userID, err = AuthRpo.CreateUser(input.Email, hashedPassword, number.Mobile); err != nil {
+		if userID, err = AuthRpo.CreateUser(input.Email, input.Password, number.Mobile); err != nil {
 			return
 		}
 		if err = AuthRpo.CreateUserProfile(userID, input.FirstName, input.LastName); err != nil {
 			return
 		}
-
-		//err = a.SendEmail(input.Email, otp)
+		err = a.SendEmail(input.Email, otp)
 		return
 	}
 
 	var sess mongo.Session
 	if sess, err = repository.MongoClient.StartSession(); err != nil {
-		log.Error(err.Error())
 		return genericSignupFailureMsg
 	}
 	defer sess.EndSession(ctx)
 
 	if _, err = sess.WithTransaction(ctx, createVerificationLink); err != nil {
-		log.Error(err.Error())
 		return genericSignupFailureMsg
 	}
 
@@ -83,9 +70,8 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 
 func (a *Auth) SendEmail(email string, otp string) error {
 	emailSvcURI := fmt.Sprintf("%s/v1/send-email", config.Params.NotificationSvcDomain)
-	//verificationLink := fmt.Sprintf("%s/verification/?otp=%s&auth=%s", config.Params.ServiceFrontend, otp, email)
-	var verificationLink = "http://localhost:3000/verification/?otp= 225933&auth=samia.airbringr@gmail.com"
-	if code, _, errs := fiber.
+	verificationLink := fmt.Sprintf("%s/verification/?otp=%s&auth=%s", config.Params.ServiceFrontend, otp, email)
+	if code, _, _ := fiber.
 		Post(emailSvcURI).
 		JSON(fiber.Map{
 			"data": fiber.Map{
@@ -98,7 +84,6 @@ func (a *Auth) SendEmail(email string, otp string) error {
 			"template_code": "signup_verification",
 		}).
 		String(); code != fiber.StatusOK {
-		log.Error(errs)
 		return errors.New("Email send failed.")
 	}
 	return nil

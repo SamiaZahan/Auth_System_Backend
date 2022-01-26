@@ -19,7 +19,6 @@ func (o *OtpSvc) Generate(genReq OtpGenerateRequest) (code string, err error) {
 	req := (otp.GenerateRequest)(genReq)
 	var resp *otp.GenerateResponse
 	if resp, err = svc.Generate(&req); err != nil {
-		log.Error(err.Error())
 		return
 	}
 	code = resp.Code
@@ -32,7 +31,6 @@ func (o *OtpSvc) Validate(validatedReq OtpValidateRequest) bool {
 	var resp *otp.ValidateResponse
 	resp, err := svc.Validate(&req)
 	if err != nil {
-		log.Error(err.Error())
 		return false
 	}
 	if !resp.Success {

@@ -6,7 +6,6 @@ import (
 	"github.com/emamulandalib/airbringr-auth/config"
 	"github.com/gofiber/fiber/v2"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 type PhoneValidate struct{}
@@ -26,10 +25,9 @@ type ApiResponseData struct {
 
 func (p *PhoneValidate) Validate(phoneNumber string, countryCode string) (valid bool, err error) {
 	checkValidPhoneAPI := fmt.Sprintf("http://apilayer.net/api/validate?access_key=%s&number=%s&country_code=%s&format=1", config.Params.NumValidAccessKey, phoneNumber, countryCode)
-	statusCode, body, errs := fiber.
+	statusCode, body, _ := fiber.
 		Post(checkValidPhoneAPI).String()
 	if statusCode != fiber.StatusOK {
-		log.Error(errs)
 		valid = false
 		err = errors.New("Something is wrong while phone number validation check")
 		return

@@ -24,7 +24,6 @@ func (a *Auth) EmailVerification(input dto.EmailVerificationInput) (err error) {
 	})
 
 	if err != nil {
-		log.Error(err.Error())
 		return genericErrMsg
 	}
 
@@ -34,7 +33,6 @@ func (a *Auth) EmailVerification(input dto.EmailVerificationInput) (err error) {
 	}
 
 	if err = aRepo.ActivateUserByEmail(input.Auth); err != nil {
-		log.Error(err.Error())
 		return genericErrMsg
 	}
 

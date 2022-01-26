@@ -17,7 +17,6 @@ import (
 	"github.com/emamulandalib/airbringr-auth/repository"
 
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -33,7 +32,6 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 	defer cancel()
 	authRepo := repository.Auth{Ctx: ctx}
 	comparePassword := ComparePassword{}
-
 	// input modify for force login
 	modifiedInput := map[string]string{
 		"email_or_mobile": input.EmailOrMobile,
@@ -55,14 +53,12 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		if !valid {
 			return LoginResponse{Error: errors.New("Not a Valid Phone Number")}
 		}
-
 	}
+
 	// try to get existing user
 	existingUser, err := authRepo.GetUserByEmailOrMobile(input.EmailOrMobile)
-
 	if err == nil {
 		passwordMatched := comparePassword.ComparePasswords(existingUser.Password, []byte(input.Password))
-
 		if passwordMatched {
 			return LoginResponse{
 				Redirect: true,
@@ -70,31 +66,23 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 				Error:    inputMarshalError,
 			}
 		}
-		if !passwordMatched {
-			return LoginResponse{Error: errors.New("Wrong Password")}
-		}
-
+		return LoginResponse{Error: errors.New("Wrong Password")}
 	}
 	if err != nil {
 		if err != mongo.ErrNoDocuments {
 			return LoginResponse{Error: errors.New("User not found")}
 		}
-		log.Error(err.Error())
-
 		//Lookup in Old DB
 		doesUserExists := DoesUserExists{}
 		response := doesUserExists.DoesUserExists(input.EmailOrMobile, input.Password)
-
 		if !response.UserExists {
 			return LoginResponse{Error: errors.New("Not an  User. Please Sign Up")}
 		}
 		if !response.PassValid {
 			return LoginResponse{Error: errors.New("Wrong Password")}
 		}
-
-		hashedPassword, passwordHasingError := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.MinCost)
-		if passwordHasingError != nil {
-			log.Error(passwordHasingError.Error())
+		hashedPassword, passwordHashingError := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.MinCost)
+		if passwordHashingError != nil {
 			return
 		}
 
@@ -102,9 +90,6 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		wc := writeconcern.New(writeconcern.WMajority())
 		rc := readconcern.Snapshot()
 		txnOpts := options.Transaction().SetWriteConcern(wc).SetReadConcern(rc)
-		//if err != nil {
-		//	panic(err)
-		//}
 		insertUser := func(sessionContext mongo.SessionContext) (i interface{}, err error) {
 			AuthRepo := repository.Auth{Ctx: sessionContext}
 			var number dto.SendSmsOtpInput
@@ -117,7 +102,6 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 			name := response.User[0].Name
 			lastName := name[strings.LastIndex(name, " ")+1:]
 			firstName := strings.TrimSuffix(name, lastName)
-
 			err = AuthRepo.CreateUserProfile(string(response.User[0].UserId), firstName, lastName)
 			if err != nil {
 				return
@@ -130,22 +114,17 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 
 		var session mongo.Session
 		if session, err = repository.MongoClient.StartSession(); err != nil {
-			log.Error(err.Error())
 			return LoginResponse{Error: genericLoginFailureMsg}
 		}
 		defer session.EndSession(context.Background())
-
 		if _, err = session.WithTransaction(context.Background(), insertUser, txnOpts); err != nil {
-			log.Error(err.Error())
 			return LoginResponse{Error: genericLoginFailureMsg}
 		}
-
 		return LoginResponse{
 			Redirect: true,
 			Code:     b64.StdEncoding.EncodeToString([]byte(code)),
 			Error:    inputMarshalError,
 		}
-		return
 	}
 	return
 }
