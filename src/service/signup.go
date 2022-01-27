@@ -18,6 +18,7 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 	genericSignupFailureMsg := errors.New("Signup failed for some technical reason.")
 	ctx := context.Background()
 	authRepo := repository.Auth{Ctx: ctx}
+	passwordService := PasswordService{}
 
 	// try to get existing user
 	existingUser, err := authRepo.GetUserByEmail(input.Email)
@@ -40,13 +41,14 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 		Id:     input.Email,
 	}); err != nil {
 		return genericSignupFailureMsg
-
+		//fmt.Print(otp)
 	}
 	createVerificationLink := func(sessCtx mongo.SessionContext) (i interface{}, err error) {
 		var userID string
 		AuthRpo := repository.Auth{Ctx: sessCtx}
 		var number dto.SendSmsOtpInput
-		if userID, err = AuthRpo.CreateUser(input.Email, input.Password, number.Mobile); err != nil {
+		hashedPassword := passwordService.HashPassword(input.Password)
+		if userID, err = AuthRpo.CreateUser(input.Email, hashedPassword, number.Mobile); err != nil {
 			return
 		}
 		if err = AuthRpo.CreateUserProfile(userID, input.FirstName, input.LastName); err != nil {
