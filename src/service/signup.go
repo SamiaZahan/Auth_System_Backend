@@ -27,11 +27,12 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 		return genericSignupFailureMsg
 	}
 	if existingUser != nil {
-		return errors.New("An user with this email already exists.")
+		return errors.New("An user with this email already exists")
 	}
 
-	if ExistingEmail(input.Email) {
-		return errors.New("An user with this email already exists.")
+	userExistResponse := ExistingMobile(input.Email)
+	if userExistResponse.Status {
+		return errors.New("An user with this email already exists")
 	}
 
 	var otp string
@@ -41,14 +42,13 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 		Id:     input.Email,
 	}); err != nil {
 		return genericSignupFailureMsg
-		//fmt.Print(otp)
 	}
 	createVerificationLink := func(sessCtx mongo.SessionContext) (i interface{}, err error) {
 		var userID string
 		AuthRpo := repository.Auth{Ctx: sessCtx}
-		var number dto.SendSmsOtpInput
+		//var number dto.SendSmsOtpInput
 		hashedPassword := passwordService.HashPassword(input.Password)
-		if userID, err = AuthRpo.CreateUser(input.Email, hashedPassword, number.Mobile); err != nil {
+		if userID, err = AuthRpo.CreateUser(input.Email, hashedPassword); err != nil {
 			return
 		}
 		if err = AuthRpo.CreateUserProfile(userID, input.FirstName, input.LastName); err != nil {
@@ -90,7 +90,7 @@ func (a *Auth) SendEmail(email string, otp string) error {
 		}).
 		String(); code != fiber.StatusOK {
 		log.Error(errs)
-		return errors.New("Email send failed.")
+		return errors.New("Email send failed")
 	}
 	return nil
 }

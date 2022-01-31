@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/emamulandalib/airbringr-auth/config"
 	"github.com/gofiber/fiber/v2"
@@ -9,40 +10,46 @@ import (
 
 type Auth struct{}
 
-func ExistingEmail(email string) (exists bool) {
-	code, _, errs := fiber.
+type ExistUserResponse struct {
+	Status  bool   `json:"status"`
+	Message string `json:"message"`
+	Error   bool   `json:"error"`
+}
+
+func ExistingEmail(email string) (resData ExistUserResponse) {
+	_, body, errs := fiber.
 		Post(fmt.Sprintf("%s/helper/exist-email", config.Params.AirBringrDomain)).
 		JSON(fiber.Map{
 			"email": email,
 		}).
 		String()
-	if code != fiber.StatusOK {
-		log.Error(errs)
-		exists = true
-		return
-	}
 	if errs != nil {
 		log.Error(errs)
+		return
 	}
-	exists = false
-	return
+	err := json.Unmarshal([]byte(body), &resData)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	return resData
 }
 
-func ExistingMobile(phone string) (exists bool) {
-	code, _, errs := fiber.
+func ExistingMobile(phone string) (resData ExistUserResponse) {
+	_, body, errs := fiber.
 		Post(fmt.Sprintf("%s/helper/exist-phone", config.Params.AirBringrDomain)).
 		JSON(fiber.Map{
 			"phone": phone,
 		}).
 		String()
-	if code != fiber.StatusOK {
-		log.Error(errs)
-		exists = false
-		return
-	}
 	if errs != nil {
 		log.Error(errs)
+		return
 	}
-	exists = true
-	return
+	err := json.Unmarshal([]byte(body), &resData)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	return resData
 }
