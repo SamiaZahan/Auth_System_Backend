@@ -64,21 +64,21 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 				Error:    inputMarshalError,
 			}
 		}
-		return LoginResponse{Error: errors.New("WRONG PASSWORD")}
+		return LoginResponse{Error: errors.New("Wrong password")}
 	}
 	if err != nil {
 		if err != mongo.ErrNoDocuments {
-			return LoginResponse{Error: errors.New("USER NOT FOUND")}
+			return LoginResponse{Error: errors.New("User not found")}
 		}
 		log.Error(err.Error())
 		//Lookup in Old DB
 		doesUserExists := DoesUserExists{}
 		response := doesUserExists.DoesUserExists(input.EmailOrMobile, input.Password)
 		if !response.UserExists {
-			return LoginResponse{Error: errors.New("NOT AN USER. PLEASE SIGN UP")}
+			return LoginResponse{Error: errors.New("Not an user. Please sign up")}
 		}
 		if !response.PassValid {
-			return LoginResponse{Error: errors.New("WRONG PASSWORD")}
+			return LoginResponse{Error: errors.New("Wrong password")}
 		}
 		hashedPassword := passwordService.HashPassword(input.Password)
 

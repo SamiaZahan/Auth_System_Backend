@@ -63,7 +63,11 @@ func (s *SmsOtp) MobileVerificationOtp(input dto.SendSmsOtpInput) (err error) {
 	genericFailureMsg := errors.New("OTP send failed")
 	mblNmbrExistMsg := errors.New("mobile number already taken")
 	var u *repository.UserDoc
-	if ExistingMobile(input.Mobile) {
+	userExistResponse := ExistingMobile(input.Mobile)
+	if userExistResponse.Error {
+		return errors.New("Error Occured")
+	}
+	if userExistResponse.Status {
 		return mblNmbrExistMsg
 	}
 	ctx := context.Background()

@@ -28,8 +28,8 @@ func (e *EmailOtp) Send(input dto.EmailOtpInput) (err error) {
 		}
 		return genericFailureMsg
 	}
-
-	if !ExistingEmail(input.Email) {
+	userExistResponse := ExistingMobile(input.Email)
+	if !userExistResponse.Status && !userExistResponse.Error {
 		return userNotExistErrMsg
 	}
 
