@@ -42,7 +42,6 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 		Id:     input.Email,
 	}); err != nil {
 		return genericSignupFailureMsg
-		fmt.Print(otp)
 	}
 	createVerificationLink := func(sessCtx mongo.SessionContext) (i interface{}, err error) {
 		var userID string
@@ -55,7 +54,7 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 		if err = AuthRpo.CreateUserProfile(userID, input.FirstName, input.LastName); err != nil {
 			return
 		}
-		//err = a.SendEmail(input.Email, otp)
+		err = a.SendEmail(input.Email, otp)
 		return
 	}
 
