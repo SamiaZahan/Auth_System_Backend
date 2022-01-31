@@ -4,8 +4,6 @@ import (
 	"context"
 	b64 "encoding/base64"
 	"encoding/json"
-	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/go-ozzo/ozzo-validation/v4/is"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readconcern"
@@ -38,22 +36,22 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		"password":        input.Password,
 	}
 	code, inputMarshalError := json.Marshal(modifiedInput)
-
-	//input.EmailOrMobile check is email??
-	err := validation.Validate(input.EmailOrMobile, is.Email)
-	if err != nil {
-		phoneNumberMap, err := authRepo.GetInfoByCountryPrefix(input.CountryPrefix)
-		if err != nil {
-			return LoginResponse{Error: errors.New("Not a valid Country Prefix")}
-		}
-		countryCode := phoneNumberMap.CountryCode
-		//check valid phone number
-		phoneValidate := PhoneNumberValidateService{}
-		valid, _ := phoneValidate.Validate(input.EmailOrMobile, countryCode)
-		if !valid {
-			return LoginResponse{Error: errors.New("Not a Valid Phone Number")}
-		}
-	}
+	//
+	////input.EmailOrMobile check is email??
+	//err := validation.Validate(input.EmailOrMobile, is.Email)
+	//if err != nil {
+	//	phoneNumberMap, err := authRepo.GetInfoByCountryPrefix(input.CountryPrefix)
+	//	if err != nil {
+	//		return LoginResponse{Error: errors.New("Not a valid Country Prefix")}
+	//	}
+	//	countryCode := phoneNumberMap.CountryCode
+	//	//check valid phone number
+	//	phoneValidate := PhoneNumberValidateService{}
+	//	valid, _ := phoneValidate.Validate(input.EmailOrMobile, countryCode)
+	//	if !valid {
+	//		return LoginResponse{Error: errors.New("Not a Valid Phone Number")}
+	//	}
+	//}
 
 	// try to get existing user
 	existingUser, err := authRepo.GetUserByEmailOrMobile(input.EmailOrMobile)
