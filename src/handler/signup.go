@@ -38,6 +38,6 @@ func (h *Handler) Signup(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(response.Payload{
-		Message: "An email will be sent with a verification link.",
+		Message: "AN EMAIL WILL BE SENT WITH A VERIFICATION LINK",
 	})
 }

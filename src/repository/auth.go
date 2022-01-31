@@ -71,16 +71,16 @@ func (a *Auth) GetUserByMobile(mobile string) (user *UserDoc, err error) {
 	return
 }
 
-func (a *Auth) CreateUser(email string, password string, mobile string) (ID string, err error) {
+func (a *Auth) CreateUser(email string, password string) (ID string, err error) {
 	col := DB.Collection(UserCollection)
 	res, err := col.InsertOne(a.Ctx, UserDoc{
 		ID:       primitive.NewObjectID(),
 		Email:    email,
 		Password: password,
-		Mobile:   mobile,
-		Active:   false,
-		Created:  time.Now(),
-		Updated:  time.Now(),
+		//Mobile:   mobile,
+		Active:  false,
+		Created: time.Now(),
+		Updated: time.Now(),
 	})
 
 	if err != nil {

@@ -64,21 +64,21 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 				Error:    inputMarshalError,
 			}
 		}
-		return LoginResponse{Error: errors.New("Wrong Password")}
+		return LoginResponse{Error: errors.New("WRONG PASSWORD")}
 	}
 	if err != nil {
 		if err != mongo.ErrNoDocuments {
-			return LoginResponse{Error: errors.New("User not found")}
+			return LoginResponse{Error: errors.New("USER NOT FOUND")}
 		}
 		log.Error(err.Error())
 		//Lookup in Old DB
 		doesUserExists := DoesUserExists{}
 		response := doesUserExists.DoesUserExists(input.EmailOrMobile, input.Password)
 		if !response.UserExists {
-			return LoginResponse{Error: errors.New("Not an  User. Please Sign Up")}
+			return LoginResponse{Error: errors.New("NOT AN USER. PLEASE SIGN UP")}
 		}
 		if !response.PassValid {
-			return LoginResponse{Error: errors.New("Wrong Password")}
+			return LoginResponse{Error: errors.New("WRONG PASSWORD")}
 		}
 		hashedPassword := passwordService.HashPassword(input.Password)
 
@@ -88,8 +88,8 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		txnOpts := options.Transaction().SetWriteConcern(wc).SetReadConcern(rc)
 		insertUser := func(sessionContext mongo.SessionContext) (i interface{}, err error) {
 			AuthRepo := repository.Auth{Ctx: sessionContext}
-			var number dto.SendSmsOtpInput
-			_, err = AuthRepo.CreateUser(response.User.Email, hashedPassword, number.Mobile)
+			//var number dto.SendSmsOtpInput
+			_, err = AuthRepo.CreateUser(response.User.Email, hashedPassword)
 			if err != nil {
 				return
 			}
