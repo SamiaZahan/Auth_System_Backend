@@ -35,6 +35,10 @@ func (d *DoesUserExists) DoesUserExists(emailOrMobile string, password string) (
 		log.Error(errs)
 		return
 	}
-	_ = json.Unmarshal([]byte(body), &resData)
+	err := json.Unmarshal([]byte(body), &resData)
+	if err != nil {
+		log.Error(err)
+		return
+	}
 	return resData
 }
