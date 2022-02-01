@@ -68,7 +68,7 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 	}
 	if err != nil {
 		if err != mongo.ErrNoDocuments {
-			return LoginResponse{Error: errors.New("User not found")}
+			log.Error(errors.New("User not found"))
 		}
 		log.Error(err.Error())
 		//Lookup in Old DB
