@@ -41,7 +41,7 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 		Expiry: int64(time.Hour * 24),
 		Id:     input.Email,
 	}); err != nil {
-		fmt.Print(otp)
+		//fmt.Print(otp)
 		return genericSignupFailureMsg
 	}
 	createVerificationLink := func(sessCtx mongo.SessionContext) (i interface{}, err error) {
@@ -54,7 +54,7 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 		if err = AuthRpo.CreateUserProfile(userID, input.FirstName, input.LastName); err != nil {
 			return
 		}
-		//err = a.SendEmail(input.Email, otp)
+		err = a.SendEmail(input.Email, otp)
 		return
 	}
 
