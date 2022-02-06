@@ -54,7 +54,9 @@ func (a *Auth) Signup(input dto.SignupInput) (err error) {
 		if err = AuthRpo.CreateUserProfile(userID, input.FirstName, input.LastName); err != nil {
 			return
 		}
-		err = a.SendEmail(input.Email, otp)
+		if err = a.SendEmail(input.Email, otp); err != nil {
+			return
+		}
 		return
 	}
 
