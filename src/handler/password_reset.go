@@ -35,7 +35,7 @@ func (receiver *Handler) PasswordReset(c *fiber.Ctx) (err error) {
 	}
 
 	return c.JSON(response.Payload{
-		Message: "Mobile verified.",
+		Message: "Password Reset Successfully",
 		Data:    dto.VerificationOutput{Verified: true},
 	})
 }

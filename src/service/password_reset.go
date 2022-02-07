@@ -66,22 +66,16 @@ func (p *PassReset) UpdatePassword(input dto.PasswordReset) (err error) {
 			return
 		}
 
-		// register user into legacy system
+		// update password into legacy system
 		var userDoc *repository.UserDoc
-		var userProfileDoc *repository.UserProfileDoc
 		if userDoc, err = aRepo.GetUserByEmail(input.Auth); err != nil {
 			return
 		}
-		if userProfileDoc, err = aRepo.GetUserProfileByID(userDoc.ID.Hex()); err != nil {
-			return
-		}
 		if code, body, errs := fiber.
-			Post(fmt.Sprintf("%s/helper/register", config.Params.AirBringrDomain)).
+			Post(fmt.Sprintf("%s/helper/update-password", config.Params.AirBringrDomain)).
 			JSON(fiber.Map{
-				"name":     fmt.Sprintf("%s %s", userProfileDoc.FirstName, userProfileDoc.LastName),
 				"email":    userDoc.Email,
-				"phone":    userDoc.Mobile,
-				"password": "Vi$FV/kBi<VuZCW2Y9JT_G(NbUj~rV",
+				"password": input.Password,
 			}).
 			String(); code != fiber.StatusOK {
 			log.Error(body)
