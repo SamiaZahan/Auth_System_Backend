@@ -63,7 +63,7 @@ func (p *PassReset) UpdatePassword(input dto.PasswordReset) (err error) {
 	cb := func(sessCtx mongo.SessionContext) (i interface{}, err error) {
 		aRepo := repository.Auth{Ctx: sessCtx}
 		if err = aRepo.SetUserPasswordByEmail(input.Auth, hashedPassword); err != nil {
-			return
+			log.Error(err)
 		}
 
 		// update password into legacy system
@@ -82,6 +82,7 @@ func (p *PassReset) UpdatePassword(input dto.PasswordReset) (err error) {
 			log.Error(errs)
 			return nil, genericFailureMsg
 		}
+
 		return
 	}
 
