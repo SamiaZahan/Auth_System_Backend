@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (receiver *Handler) PasswordReset(c *fiber.Ctx) (err error) {
+func (h *Handler) PasswordReset(c *fiber.Ctx) (err error) {
 	input := new(dto.PasswordReset)
 
 	if err = c.BodyParser(input); err != nil {

@@ -72,7 +72,7 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		}
 		log.Error(err.Error())
 		//Lookup in Old DB
-		doesUserExists := DoesUserExists{}
+		doesUserExists := UserExistenceService{}
 		response := doesUserExists.DoesUserExists(input.EmailOrMobile, input.Password)
 		if !response.UserExists {
 			return LoginResponse{Error: errors.New("Not an user. Please sign up")}

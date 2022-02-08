@@ -9,7 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func (receiver *Handler) SendSmsOtp(c *fiber.Ctx) (err error) {
+func (h *Handler) SendSmsOtp(c *fiber.Ctx) (err error) {
 	input := new(dto.SendSmsOtpInput)
 
 	if err = c.BodyParser(input); err != nil {

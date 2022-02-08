@@ -19,19 +19,39 @@ import (
 type PassReset struct{}
 
 func (p *PassReset) PasswordResetOtp(input *dto.EmailOtpInput) (err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	defer cancel()
 	genericPassResetFailureMsg := errors.New("Password Reset failed for some technical reason.")
+
+	aRepo := repository.Auth{Ctx: ctx}
+	_, err = aRepo.GetUserByEmail(input.Email)
+
+	if err != nil && mongo.ErrNoDocuments != err {
+		log.Error(err)
+		return
+	}
+
+	if err == mongo.ErrNoDocuments {
+		emailExists := ExistingEmail(input.Email)
+
+		if emailExists.Error {
+			return errors.New("something went wrong. please try again later")
+		}
+
+		if !emailExists.Status {
+			return errors.New("not an user. please signup")
+		}
+	}
+
 	var otp string
 	otpSvc := OtpSvc{MicroAPIToken: config.Params.MicroAPIToken}
 	if otp, err = otpSvc.Generate(OtpGenerateRequest{
 		Expiry: int64(time.Hour * 24),
 		Id:     input.Email,
 	}); err != nil {
-		//fmt.Print(otp)
 		return genericPassResetFailureMsg
 	}
-	if err = p.PassResetSendEmail(input.Email, otp); err != nil {
-		return
-	}
+	err = p.PassResetSendEmail(input.Email, otp)
 	return
 }
 func (p *PassReset) PassResetSendEmail(email string, otp string) error {
