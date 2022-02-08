@@ -56,7 +56,7 @@ func (p *PassReset) PasswordResetOtp(input *dto.EmailOtpInput) (err error) {
 }
 func (p *PassReset) PassResetSendEmail(email string, otp string) error {
 	emailSvcURI := fmt.Sprintf("%s/v1/send-email", config.Params.NotificationSvcDomain)
-	passwordResetLink := fmt.Sprintf("%s/password-reset/?otp=%s&auth=%s", config.Params.ServiceFrontend, otp, email)
+	passwordResetLink := fmt.Sprintf("%s/reset/?otp=%s&auth=%s", config.Params.ServiceFrontend, otp, email)
 	if code, _, errs := fiber.
 		Post(emailSvcURI).
 		JSON(fiber.Map{
