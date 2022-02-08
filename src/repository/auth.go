@@ -78,7 +78,7 @@ func (a *Auth) CreateUser(email string, password string, mobile string) (ID stri
 		Email:    email,
 		Password: password,
 		Mobile:   mobile,
-		Active:   true,
+		Active:   false,
 		Created:  time.Now(),
 		Updated:  time.Now(),
 	})

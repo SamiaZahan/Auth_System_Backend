@@ -26,12 +26,12 @@ func (p *PassReset) PasswordResetOtp(input *dto.EmailOtpInput) (err error) {
 		Expiry: int64(time.Hour * 24),
 		Id:     input.Email,
 	}); err != nil {
-		fmt.Print(otp)
+		//fmt.Print(otp)
 		return genericPassResetFailureMsg
 	}
-	//if err = p.PassResetSendEmail(input.Email, otp); err != nil {
-	//	return
-	//}
+	if err = p.PassResetSendEmail(input.Email, otp); err != nil {
+		return
+	}
 	return
 }
 func (p *PassReset) PassResetSendEmail(email string, otp string) error {
