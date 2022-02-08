@@ -9,7 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func (receiver *Handler) VerifyOtp(c *fiber.Ctx) (err error) {
+func (h *Handler) VerifyOtp(c *fiber.Ctx) (err error) {
 	input := new(dto.VerifyOtpInput)
 
 	if err = c.BodyParser(input); err != nil {

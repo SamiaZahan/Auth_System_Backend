@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type DoesUserExists struct{}
+type UserExistenceService struct{}
 
 type ResponseData struct {
 	UserExists bool   `json:"user_exists"`
@@ -23,7 +23,7 @@ type User struct {
 	Email  string `json:"email"`
 }
 
-func (d *DoesUserExists) DoesUserExists(emailOrMobile string, password string) (resData ResponseData) {
+func (d *UserExistenceService) DoesUserExists(emailOrMobile string, password string) (resData ResponseData) {
 	doesUserExistsURI := fmt.Sprintf("%s/helper/does-user-exist", config.Params.AirBringrDomain)
 	statusCode, body, errs := fiber.
 		Post(doesUserExistsURI).

@@ -9,7 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func (receiver *Handler) MobileVerificationOTP(c *fiber.Ctx) (err error) {
+func (h *Handler) MobileVerificationOTP(c *fiber.Ctx) (err error) {
 	input := new(dto.SendSmsOtpInput)
 
 	if err = c.BodyParser(input); err != nil {
@@ -40,7 +40,7 @@ func (receiver *Handler) MobileVerificationOTP(c *fiber.Ctx) (err error) {
 	})
 }
 
-func (receiver *Handler) VerifyMobile(c *fiber.Ctx) (err error) {
+func (h *Handler) VerifyMobile(c *fiber.Ctx) (err error) {
 	input := new(dto.VerifyMobileInput)
 
 	if err = c.BodyParser(input); err != nil {
