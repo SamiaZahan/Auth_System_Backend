@@ -80,8 +80,11 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		if !response.PassValid {
 			return LoginResponse{Error: errors.New("Wrong password")}
 		}
+		oldUserVerificationErr := a.OldUserVerify(response.User.Email)
+		if oldUserVerificationErr != nil {
+			return LoginResponse{Error: oldUserVerificationErr}
+		}
 		hashedPassword := passwordService.HashPassword(input.Password)
-
 		//Transaction
 		wc := writeconcern.New(writeconcern.WMajority())
 		rc := readconcern.Snapshot()

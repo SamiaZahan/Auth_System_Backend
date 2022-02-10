@@ -10,16 +10,13 @@ import (
 
 func (h *Handler) Login(c *fiber.Ctx) error {
 	input := new(dto.LoginInput)
-
 	if err := c.BodyParser(input); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Payload{
 			Message: response.BodyParseFailedErrorMsg,
 			Errors:  errors.New(response.BodyParseFailedErrorMsg),
 		})
 	}
-
 	err := input.Validate()
-
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Payload{
 			Message: response.ValidationFailedMsg,
@@ -29,17 +26,8 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 
 	svc := service.Auth{}
 	res := svc.Login(*input)
-	//log.Print(res.Code)
 	if res.Redirect {
 		return c.JSON(response.Payload{Message: "DONE", Data: fiber.Map{"code": res.Code}})
-		//err = c.Redirect(fmt.Sprintf("%s/forced-login/?code=%s", config.Params.AirBringrDomain, res.Code))
-		//if err != nil {
-		//	log.Error(err.Error())
-		//	return c.Status(fiber.StatusBadRequest).JSON(response.Payload{
-		//		Message: "Failed to Login",
-		//		Errors:  err,
-		//	})
-		//}
 	}
 
 	if res.Error != nil {

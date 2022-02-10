@@ -1,8 +1,8 @@
 package response
 
 var (
-	BodyParseFailedErrorMsg = "Failed to parse the body."
-	ValidationFailedMsg     = "Validation failed."
+	BodyParseFailedErrorMsg = "failed to parse the body"
+	ValidationFailedMsg     = "validation failed"
 )
 
 type Payload struct {
