@@ -17,7 +17,6 @@ func (a *Auth) OldUserVerify(email string) (err error) {
 		Expiry: int64(time.Hour * 24),
 		Id:     email,
 	}); err != nil {
-		fmt.Print(otp)
 		err = genericSignupFailureMsg
 		return
 	}
