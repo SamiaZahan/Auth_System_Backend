@@ -4,18 +4,16 @@ import (
 	"context"
 	b64 "encoding/base64"
 	"encoding/json"
-	log "github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readconcern"
-	"go.mongodb.org/mongo-driver/mongo/writeconcern"
-	"strings"
-	"time"
-
+	"fmt"
+	"github.com/emamulandalib/airbringr-auth/config"
 	"github.com/emamulandalib/airbringr-auth/dto"
 	"github.com/emamulandalib/airbringr-auth/repository"
-
+	"github.com/gofiber/fiber/v2"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
+	"strings"
+	"time"
 )
 
 type LoginResponse struct {
@@ -52,7 +50,6 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 	//		return LoginResponse{Error: errors.New("Not a Valid Phone Number")}
 	//	}
 	//}
-
 	// try to get existing user
 	existingUser, err := authRepo.GetUserByEmailOrMobile(input.EmailOrMobile)
 	if err == nil {
@@ -80,52 +77,116 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		if !response.PassValid {
 			return LoginResponse{Error: errors.New("Wrong password")}
 		}
-		oldUserVerificationErr := a.OldUserVerify(response.User.Email)
-		if oldUserVerificationErr != nil {
-			return LoginResponse{Error: oldUserVerificationErr}
+		//oldUserVerificationErr := a.OldUserVerify(response.User.Email, input.Password)
+		//if oldUserVerificationErr != nil {
+		//	return LoginResponse{Error: oldUserVerificationErr}
+		//}
+		//hashedPassword := passwordService.HashPassword(input.Password)
+		////Transaction
+		//wc := writeconcern.New(writeconcern.WMajority())
+		//rc := readconcern.Snapshot()
+		//txnOpts := options.Transaction().SetWriteConcern(wc).SetReadConcern(rc)
+		//insertUser := func(sessionContext mongo.SessionContext) (i interface{}, err error) {
+		//	AuthRepo := repository.Auth{Ctx: sessionContext}
+		//	//var number dto.SendSmsOtpInput
+		//	_, err = AuthRepo.CreateUser(response.User.Email, hashedPassword)
+		//	if err != nil {
+		//		return
+		//	}
+		//
+		//	//splitting username
+		//	name := response.User.Name
+		//	lastName := name[strings.LastIndex(name, " ")+1:]
+		//	firstName := strings.TrimSuffix(name, lastName)
+		//	err = AuthRepo.CreateUserProfile(string(response.User.UserId), firstName, lastName)
+		//	if err != nil {
+		//		return
+		//	}
+		//	if err != nil {
+		//		return
+		//	}
+		//	return
+		//}
+		//
+		//var session mongo.Session
+		//if session, err = repository.MongoClient.StartSession(); err != nil {
+		//	log.Error(err.Error())
+		//	return LoginResponse{Error: genericLoginFailureMsg}
+		//}
+		//defer session.EndSession(context.Background())
+		//if _, err = session.WithTransaction(context.Background(), insertUser, txnOpts); err != nil {
+		//	log.Error(err.Error())
+		//	return LoginResponse{Error: genericLoginFailureMsg}
+		//}
+		//return LoginResponse{
+		//	Redirect: true,
+		//	Code:     b64.StdEncoding.EncodeToString([]byte(code)),
+		//	Error:    inputMarshalError,
+		//}
+
+		//Old Shopper Email, Mobile  Verification
+
+		var otp string
+		otpSvc := OtpSvc{MicroAPIToken: config.Params.MicroAPIToken}
+		if otp, err = otpSvc.Generate(OtpGenerateRequest{
+			Expiry: int64(time.Hour * 24),
+			Id:     response.User.Email,
+		}); err != nil {
+			fmt.Print(otp)
+			return LoginResponse{Error: genericLoginFailureMsg}
 		}
-		hashedPassword := passwordService.HashPassword(input.Password)
-		//Transaction
-		wc := writeconcern.New(writeconcern.WMajority())
-		rc := readconcern.Snapshot()
-		txnOpts := options.Transaction().SetWriteConcern(wc).SetReadConcern(rc)
-		insertUser := func(sessionContext mongo.SessionContext) (i interface{}, err error) {
-			AuthRepo := repository.Auth{Ctx: sessionContext}
-			//var number dto.SendSmsOtpInput
-			_, err = AuthRepo.CreateUser(response.User.Email, hashedPassword)
-			if err != nil {
+		createVerificationLink := func(sessCtx mongo.SessionContext) (i interface{}, err error) {
+			var userID string
+			AuthRpo := repository.Auth{Ctx: sessCtx}
+			hashedPassword := passwordService.HashPassword(input.Password)
+			if userID, err = AuthRpo.CreateUser(response.User.Email, hashedPassword); err != nil {
 				return
 			}
-
-			//splitting username
 			name := response.User.Name
 			lastName := name[strings.LastIndex(name, " ")+1:]
 			firstName := strings.TrimSuffix(name, lastName)
-			err = AuthRepo.CreateUserProfile(string(response.User.UserId), firstName, lastName)
-			if err != nil {
+			if err = AuthRpo.CreateUserProfile(userID, firstName, lastName); err != nil {
 				return
 			}
-			if err != nil {
-				return
-			}
+			err = a.OldUserVerifySendEmail(response.User.Email, otp)
 			return
 		}
 
-		var session mongo.Session
-		if session, err = repository.MongoClient.StartSession(); err != nil {
+		var sess mongo.Session
+		if sess, err = repository.MongoClient.StartSession(); err != nil {
 			log.Error(err.Error())
 			return LoginResponse{Error: genericLoginFailureMsg}
 		}
-		defer session.EndSession(context.Background())
-		if _, err = session.WithTransaction(context.Background(), insertUser, txnOpts); err != nil {
+		defer sess.EndSession(ctx)
+
+		if _, err = sess.WithTransaction(ctx, createVerificationLink); err != nil {
 			log.Error(err.Error())
 			return LoginResponse{Error: genericLoginFailureMsg}
 		}
-		return LoginResponse{
-			Redirect: true,
-			Code:     b64.StdEncoding.EncodeToString([]byte(code)),
-			Error:    inputMarshalError,
-		}
+
+		return
 	}
 	return
+}
+
+func (a *Auth) OldUserVerifySendEmail(email string, otp string) error {
+	emailSvcURI := fmt.Sprintf("%s/v1/send-email", config.Params.NotificationSvcDomain)
+	verificationLink := fmt.Sprintf("%s/verification/?otp=%s&auth=%s", config.Params.ServiceFrontend, otp, email)
+	if code, _, errs := fiber.
+		Post(emailSvcURI).
+		JSON(fiber.Map{
+			"data": fiber.Map{
+				"link": verificationLink,
+			},
+			"to":            email,
+			"from":          "contact@airbringr.com",
+			"message":       "Dear valued Shopper, We are migrating our system. Please click the link to verify your account.",
+			"subject":       "AirBringr Old Shopper Verification",
+			"template_code": "signup_verification",
+		}).
+		String(); code != fiber.StatusOK {
+		log.Error(errs)
+		return errors.New("Email send failed")
+	}
+	return nil
 }
