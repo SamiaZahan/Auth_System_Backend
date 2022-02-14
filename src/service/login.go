@@ -34,22 +34,7 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		"password":        input.Password,
 	}
 	code, inputMarshalError := json.Marshal(modifiedInput)
-	//
-	////input.EmailOrMobile check is email??
-	//err := validation.Validate(input.EmailOrMobile, is.Email)
-	//if err != nil {
-	//	phoneNumberMap, err := authRepo.GetInfoByCountryPrefix(input.CountryPrefix)
-	//	if err != nil {
-	//		return LoginResponse{Error: errors.New("Not a valid Country Prefix")}
-	//	}
-	//	countryCode := phoneNumberMap.CountryCode
-	//	//check valid phone number
-	//	phoneValidate := PhoneNumberValidateService{}
-	//	valid, _ := phoneValidate.Validate(input.EmailOrMobile, countryCode)
-	//	if !valid {
-	//		return LoginResponse{Error: errors.New("Not a Valid Phone Number")}
-	//	}
-	//}
+
 	// try to get existing user
 	existingUser, err := authRepo.GetUserByEmailOrMobile(input.EmailOrMobile)
 	if err == nil {
@@ -77,52 +62,6 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 		if !response.PassValid {
 			return LoginResponse{Error: errors.New("Wrong password")}
 		}
-		//oldUserVerificationErr := a.OldUserVerify(response.User.Email, input.Password)
-		//if oldUserVerificationErr != nil {
-		//	return LoginResponse{Error: oldUserVerificationErr}
-		//}
-		//hashedPassword := passwordService.HashPassword(input.Password)
-		////Transaction
-		//wc := writeconcern.New(writeconcern.WMajority())
-		//rc := readconcern.Snapshot()
-		//txnOpts := options.Transaction().SetWriteConcern(wc).SetReadConcern(rc)
-		//insertUser := func(sessionContext mongo.SessionContext) (i interface{}, err error) {
-		//	AuthRepo := repository.Auth{Ctx: sessionContext}
-		//	//var number dto.SendSmsOtpInput
-		//	_, err = AuthRepo.CreateUser(response.User.Email, hashedPassword)
-		//	if err != nil {
-		//		return
-		//	}
-		//
-		//	//splitting username
-		//	name := response.User.Name
-		//	lastName := name[strings.LastIndex(name, " ")+1:]
-		//	firstName := strings.TrimSuffix(name, lastName)
-		//	err = AuthRepo.CreateUserProfile(string(response.User.UserId), firstName, lastName)
-		//	if err != nil {
-		//		return
-		//	}
-		//	if err != nil {
-		//		return
-		//	}
-		//	return
-		//}
-		//
-		//var session mongo.Session
-		//if session, err = repository.MongoClient.StartSession(); err != nil {
-		//	log.Error(err.Error())
-		//	return LoginResponse{Error: genericLoginFailureMsg}
-		//}
-		//defer session.EndSession(context.Background())
-		//if _, err = session.WithTransaction(context.Background(), insertUser, txnOpts); err != nil {
-		//	log.Error(err.Error())
-		//	return LoginResponse{Error: genericLoginFailureMsg}
-		//}
-		//return LoginResponse{
-		//	Redirect: true,
-		//	Code:     b64.StdEncoding.EncodeToString([]byte(code)),
-		//	Error:    inputMarshalError,
-		//}
 
 		//Old Shopper Email, Mobile  Verification
 
