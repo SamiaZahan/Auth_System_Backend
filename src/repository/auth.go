@@ -78,9 +78,11 @@ func (a *Auth) CreateUser(email string, password string) (ID string, err error) 
 		Email:    email,
 		Password: password,
 		//Mobile:   mobile,
-		Active:  false,
-		Created: time.Now(),
-		Updated: time.Now(),
+		Active:         false,
+		EmailVerified:  false,
+		MobileVerified: false,
+		Created:        time.Now(),
+		Updated:        time.Now(),
 	})
 
 	if err != nil {
@@ -121,7 +123,10 @@ func (a *Auth) ActivateUserByEmail(email string) (err error) {
 	_, err = col.UpdateOne(
 		a.Ctx,
 		bson.M{"email": bson.M{"$eq": email}},
-		bson.M{"$set": bson.M{"active": true}},
+		bson.M{"$set": bson.M{
+			"active":         true,
+			"email_verified": true,
+		}},
 	)
 	return
 }
@@ -142,7 +147,10 @@ func (a *Auth) SetUserMobileByEmail(email string, mobile string) (err error) {
 	_, err = col.UpdateOne(
 		a.Ctx,
 		bson.M{"email": bson.M{"$eq": email}},
-		bson.M{"$set": bson.M{"mobile": mobile}},
+		bson.M{"$set": bson.M{
+			"mobile":          mobile,
+			"mobile_verified": true,
+		}},
 	)
 	return
 }

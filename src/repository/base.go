@@ -19,13 +19,15 @@ const VerificationCollection = "verification"
 const PhoneNumberMapCollection = "phone_number_map"
 
 type UserDoc struct {
-	ID       primitive.ObjectID `bson:"_id"`
-	Email    string             `bson:"email"`
-	Password string             `bson:"password"`
-	Mobile   string             `bson:"mobile"`
-	Active   bool               `bson:"active"`
-	Created  time.Time          `bson:"created"`
-	Updated  time.Time          `bson:"updated"`
+	ID             primitive.ObjectID `bson:"_id"`
+	Email          string             `bson:"email"`
+	Password       string             `bson:"password"`
+	Mobile         string             `bson:"mobile"`
+	Active         bool               `bson:"active"`
+	EmailVerified  bool               `bson:"email_verified"`
+	MobileVerified bool               `bson:"mobile_verified"`
+	Created        time.Time          `bson:"created"`
+	Updated        time.Time          `bson:"updated"`
 }
 
 type UserProfileDoc struct {

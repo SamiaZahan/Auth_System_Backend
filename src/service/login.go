@@ -39,6 +39,13 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 	existingUser, err := authRepo.GetUserByEmailOrMobile(input.EmailOrMobile)
 	if err == nil {
 		passwordMatched := passwordService.ComparePasswords(existingUser.Password, []byte(input.Password))
+		if !existingUser.EmailVerified {
+			return LoginResponse{Error: errors.New("Email is not verified")}
+		}
+		if !existingUser.MobileVerified {
+			return LoginResponse{Error: errors.New("Mobile number is not verified")}
+		}
+		//TODO: future scope: a scheduler will remove the  unverified users within certain time.
 		if passwordMatched {
 			return LoginResponse{
 				Redirect: true,
