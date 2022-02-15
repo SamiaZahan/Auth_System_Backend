@@ -85,7 +85,6 @@ func (p *PassReset) UpdatePassword(input dto.PasswordReset) (err error) {
 		if err = aRepo.SetUserPasswordByEmail(input.Auth, hashedPassword); err != nil {
 			log.Error(err)
 		}
-		// update password into legacy system
 
 		if code, body, errs := fiber.
 			Post(fmt.Sprintf("%s/helper/update-password", config.Params.AirBringrDomain)).
@@ -98,7 +97,7 @@ func (p *PassReset) UpdatePassword(input dto.PasswordReset) (err error) {
 			log.Error(errs)
 			return nil, genericFailureMsg
 		}
-
+		err = p.UpdatePasswordConfirmEmail(input.Auth)
 		return
 	}
 
@@ -109,7 +108,27 @@ func (p *PassReset) UpdatePassword(input dto.PasswordReset) (err error) {
 	}
 	defer sess.EndSession(ctx)
 	if _, err = sess.WithTransaction(ctx, cb); err != nil {
+		log.Error(err.Error())
 		return genericFailureMsg
 	}
 	return
+}
+
+func (p *PassReset) UpdatePasswordConfirmEmail(email string) error {
+	emailSvcURI := fmt.Sprintf("%s/v1/send-email", config.Params.NotificationSvcDomain)
+	if code, _, errs := fiber.
+		Post(emailSvcURI).
+		JSON(fiber.Map{
+			"data":          fiber.Map{},
+			"to":            email,
+			"from":          "contact@airbringr.com",
+			"message":       "Your password has been updated successfully.",
+			"subject":       "AirBringr Password Reset Confirmation",
+			"template_code": "password_reset_confirmation",
+		}).
+		String(); code != fiber.StatusOK {
+		log.Error(errs)
+		return errors.New("Email send failed")
+	}
+	return nil
 }
