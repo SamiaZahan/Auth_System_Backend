@@ -63,14 +63,20 @@ func (s *SmsOtp) MobileVerificationOtp(input dto.SendSmsOtpInput) (err error) {
 	genericFailureMsg := errors.New("OTP send failed")
 	mblNmbrExistMsg := errors.New("mobile number already taken")
 	var u *repository.UserDoc
-	userExistResponse := ExistingMobile(input.Mobile)
-	if userExistResponse.Error {
-		return errors.New("Error Occured")
-	}
-	if userExistResponse.Status {
-		return mblNmbrExistMsg
-	}
-	ctx := context.Background()
+
+	// We need to verify all the mobile numbers from the beginning,
+	// so, we're no need to check from the legacy system.
+	//
+	//userExistResponse := ExistingMobile(input.Mobile)
+	//if userExistResponse.Error {
+	//	return errors.New("Error Occured")
+	//}
+	//if userExistResponse.Status {
+	//	return mblNmbrExistMsg
+	//---------------------------------------------------------
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	defer cancel()
 	aRepo := repository.Auth{Ctx: ctx}
 	if u, err = aRepo.GetUserByMobile(input.Mobile); err != nil && err != mongo.ErrNoDocuments {
 		return genericFailureMsg
