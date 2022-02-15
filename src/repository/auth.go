@@ -71,18 +71,16 @@ func (a *Auth) GetUserByMobile(mobile string) (user *UserDoc, err error) {
 	return
 }
 
-func (a *Auth) CreateUser(email string, password string) (ID string, err error) {
+func (a *Auth) CreateUser(email string, password string, mobile string) (ID string, err error) {
 	col := DB.Collection(UserCollection)
 	res, err := col.InsertOne(a.Ctx, UserDoc{
 		ID:       primitive.NewObjectID(),
 		Email:    email,
 		Password: password,
-		//Mobile:   mobile,
-		Active:         false,
-		EmailVerified:  false,
-		MobileVerified: false,
-		Created:        time.Now(),
-		Updated:        time.Now(),
+		Mobile:   mobile,
+		Active:   false,
+		Created:  time.Now(),
+		Updated:  time.Now(),
 	})
 
 	if err != nil {
@@ -123,10 +121,7 @@ func (a *Auth) ActivateUserByEmail(email string) (err error) {
 	_, err = col.UpdateOne(
 		a.Ctx,
 		bson.M{"email": bson.M{"$eq": email}},
-		bson.M{"$set": bson.M{
-			"active":         true,
-			"email_verified": true,
-		}},
+		bson.M{"$set": bson.M{"active": true}},
 	)
 	return
 }
@@ -147,10 +142,16 @@ func (a *Auth) SetUserMobileByEmail(email string, mobile string) (err error) {
 	_, err = col.UpdateOne(
 		a.Ctx,
 		bson.M{"email": bson.M{"$eq": email}},
-		bson.M{"$set": bson.M{
-			"mobile":          mobile,
-			"mobile_verified": true,
-		}},
+		bson.M{"$set": bson.M{"mobile": mobile}},
+	)
+	return
+}
+func (a *Auth) SetUserPasswordByEmail(email string, password string) (err error) {
+	col := DB.Collection(UserCollection)
+	_, err = col.UpdateOne(
+		a.Ctx,
+		bson.M{"email": bson.M{"$eq": email}},
+		bson.M{"$set": bson.M{"password": password}},
 	)
 	return
 }

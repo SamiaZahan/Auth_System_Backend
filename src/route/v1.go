@@ -20,5 +20,7 @@ func V1(server *fiber.App, handler *handler.Handler) {
 	v1.Post("/verify-otp", handler.VerifyOtp)
 
 	v1.Post("/login", handler.Login)
+	v1.Post("/password-reset-email-link", handler.PasswordResetEmailLink)
+	v1.Post("/password-reset", handler.PasswordReset)
 
 }
