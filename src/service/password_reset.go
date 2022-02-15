@@ -119,7 +119,9 @@ func (p *PassReset) UpdatePasswordConfirmEmail(email string) error {
 	if code, _, errs := fiber.
 		Post(emailSvcURI).
 		JSON(fiber.Map{
-			"data":          fiber.Map{},
+			"data": fiber.Map{
+				"name": "John Doe",
+			},
 			"to":            email,
 			"from":          "contact@airbringr.com",
 			"message":       "Your password has been updated successfully.",
