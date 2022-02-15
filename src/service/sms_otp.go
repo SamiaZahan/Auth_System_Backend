@@ -156,6 +156,7 @@ func (s *SmsOtp) VerifyAndRegisterMobileNumber(input dto.VerifyMobileInput) (err
 	}
 	defer sess.EndSession(ctx)
 	if _, err = sess.WithTransaction(ctx, cb); err != nil {
+		log.Error(err.Error())
 		return genericFailureMsg
 	}
 	return
