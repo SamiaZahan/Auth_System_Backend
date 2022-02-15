@@ -121,7 +121,10 @@ func (a *Auth) ActivateUserByEmail(email string) (err error) {
 	_, err = col.UpdateOne(
 		a.Ctx,
 		bson.M{"email": bson.M{"$eq": email}},
-		bson.M{"$set": bson.M{"active": true}},
+		bson.M{"$set": bson.M{
+			"active":         true,
+			"email_verified": true,
+		}},
 	)
 	return
 }
@@ -142,7 +145,10 @@ func (a *Auth) SetUserMobileByEmail(email string, mobile string) (err error) {
 	_, err = col.UpdateOne(
 		a.Ctx,
 		bson.M{"email": bson.M{"$eq": email}},
-		bson.M{"$set": bson.M{"mobile": mobile}},
+		bson.M{"$set": bson.M{
+			"mobile":          mobile,
+			"mobile_verified": true,
+		}},
 	)
 	return
 }
