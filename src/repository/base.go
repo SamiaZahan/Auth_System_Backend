@@ -26,6 +26,7 @@ type UserDoc struct {
 	Active         bool               `bson:"active"`
 	EmailVerified  bool               `bson:"email_verified"`
 	MobileVerified bool               `bson:"mobile_verified"`
+	ExistingUser   bool               `bson:"existing_user"`
 	Created        time.Time          `bson:"created"`
 	Updated        time.Time          `bson:"updated"`
 }

@@ -128,6 +128,11 @@ func (s *SmsOtp) VerifyAndRegisterMobileNumber(input dto.VerifyMobileInput) (err
 		if userProfileDoc, err = aRepo.GetUserProfileByID(userDoc.ID.Hex()); err != nil {
 			return
 		}
+
+		if userDoc.ExistingUser {
+			return
+		}
+
 		if code, body, errs := fiber.
 			Post(fmt.Sprintf("%s/helper/register", config.Params.AirBringrDomain)).
 			JSON(fiber.Map{

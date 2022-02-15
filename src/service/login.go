@@ -84,7 +84,7 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 			var userID string
 			AuthRpo := repository.Auth{Ctx: sessCtx}
 			hashedPassword := passwordService.HashPassword(input.Password)
-			if userID, err = AuthRpo.CreateUser(response.User.Email, hashedPassword, ""); err != nil {
+			if userID, err = AuthRpo.CreateUser(response.User.Email, hashedPassword, "", true); err != nil {
 				return
 			}
 			name := response.User.Name
