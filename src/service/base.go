@@ -25,12 +25,16 @@ func ExistingEmail(email string) (resData ExistUserResponse) {
 		String()
 	if errs != nil {
 		log.Error(errs)
-		return
+		return ExistUserResponse{
+			Status: true,
+		}
 	}
 	err := json.Unmarshal([]byte(body), &resData)
 	if err != nil {
 		log.Error(err)
-		return
+		return ExistUserResponse{
+			Status: true,
+		}
 	}
 	return resData
 }
@@ -44,12 +48,16 @@ func ExistingMobile(phone string) (resData ExistUserResponse) {
 		String()
 	if errs != nil {
 		log.Error(errs)
-		return
+		return ExistUserResponse{
+			Status: true,
+		}
 	}
 	err := json.Unmarshal([]byte(body), &resData)
 	if err != nil {
 		log.Error(err)
-		return
+		return ExistUserResponse{
+			Status: true,
+		}
 	}
 	return resData
 }
