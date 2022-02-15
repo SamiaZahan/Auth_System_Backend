@@ -78,7 +78,6 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 			Expiry: int64(time.Hour * 24),
 			Id:     response.User.Email,
 		}); err != nil {
-			fmt.Print(otp)
 			return LoginResponse{Error: genericLoginFailureMsg}
 		}
 		createVerificationLink := func(sessCtx mongo.SessionContext) (i interface{}, err error) {
