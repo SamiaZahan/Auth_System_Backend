@@ -134,7 +134,7 @@ func (s *SmsOtp) VerifyAndRegisterMobileNumber(input dto.VerifyMobileInput) (err
 		}
 
 		if code, body, errs := fiber.
-			Post(fmt.Sprintf("%s/helper/register", config.Params.AirBringrDomain)).
+			Post(fmt.Sprintf("%s/helper/register-v2", config.Params.AirBringrDomain)).
 			JSON(fiber.Map{
 				"name":     fmt.Sprintf("%s %s", userProfileDoc.FirstName, userProfileDoc.LastName),
 				"email":    userDoc.Email,
