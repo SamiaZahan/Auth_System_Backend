@@ -27,7 +27,7 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 	svc := service.Auth{}
 	res := svc.Login(*input)
 	if res.Error == nil && !res.Redirect {
-		return c.JSON(response.Payload{Message: "An Email has been send to your mail. Please Verify"})
+		return c.JSON(response.Payload{Message: "An Email has been send to your mail. Please Verify", Data: fiber.Map{"code": ""}})
 	}
 	if res.Redirect {
 		return c.JSON(response.Payload{Message: "DONE", Data: fiber.Map{"code": res.Code}})
