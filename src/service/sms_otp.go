@@ -130,10 +130,23 @@ func (s *SmsOtp) VerifyAndRegisterMobileNumber(input dto.VerifyMobileInput) (err
 		}
 
 		if userDoc.ExistingUser {
+			code, _, errs := fiber.
+				Post(fmt.Sprintf("%s/helper/update-phone-number", config.Params.AirBringrDomain)).
+				JSON(fiber.Map{
+					"name":     fmt.Sprintf("%s %s", userProfileDoc.FirstName, userProfileDoc.LastName),
+					"email":    userDoc.Email,
+					"phone":    userDoc.Mobile,
+					"password": "*qSdn<<rha7eFb6<rPFF.!4=Nk%=6R",
+				}).
+				String()
+
+			if code != fiber.StatusOK || errs != nil {
+				return nil, errors.New("phone number update failed")
+			}
 			return
 		}
 
-		if code, body, errs := fiber.
+		code, _, errs := fiber.
 			Post(fmt.Sprintf("%s/helper/register-v2", config.Params.AirBringrDomain)).
 			JSON(fiber.Map{
 				"name":     fmt.Sprintf("%s %s", userProfileDoc.FirstName, userProfileDoc.LastName),
@@ -141,10 +154,10 @@ func (s *SmsOtp) VerifyAndRegisterMobileNumber(input dto.VerifyMobileInput) (err
 				"phone":    userDoc.Mobile,
 				"password": "Vi$FV/kBi<VuZCW2Y9JT_G(NbUj~rV",
 			}).
-			String(); code != fiber.StatusOK {
-			log.Error(body)
-			log.Error(errs)
-			return nil, genericFailureMsg
+			String()
+
+		if code != fiber.StatusOK || errs != nil {
+			return nil, errors.New("user registration failed")
 		}
 		return
 	}
