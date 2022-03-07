@@ -9,6 +9,7 @@ import (
 	"github.com/emamulandalib/airbringr-auth/dto"
 	"github.com/emamulandalib/airbringr-auth/repository"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -19,6 +20,7 @@ import (
 type LoginResponse struct {
 	Redirect bool
 	Code     string // base64 encoded base64.encode({"emailOrPhone": "", "password": ""})
+	Token    string
 	Error    error
 }
 
@@ -35,7 +37,7 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 	}
 	code, inputMarshalError := json.Marshal(modifiedInput)
 
-	// try to get existing user
+	// try to get existing user in new db
 	existingUser, err := authRepo.GetUserByEmailOrMobile(input.EmailOrMobile)
 	if err == nil {
 		passwordMatched := passwordService.ComparePasswords(existingUser.Password, []byte(input.Password))
@@ -46,10 +48,19 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 			return LoginResponse{Error: errors.New("Mobile number is not verified")}
 		}
 		//TODO: future scope: a scheduler will remove the  unverified users within certain time.
+		//JWT TOKEN  GENERATE
+		claims := jwt.MapClaims{
+			"mobile": existingUser.Mobile,
+			"email":  existingUser.Email,
+			"exp":    time.Now().Add(time.Hour * 72).Unix(),
+		}
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+		signedToken, _ := token.SignedString([]byte(config.Params.JWTSignatureSecret))
 		if passwordMatched {
 			return LoginResponse{
 				Redirect: true,
 				Code:     b64.StdEncoding.EncodeToString([]byte(code)),
+				Token:    signedToken,
 				Error:    inputMarshalError,
 			}
 		}
@@ -78,6 +89,7 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 			Expiry: int64(time.Hour * 24),
 			Id:     response.User.Email,
 		}); err != nil {
+			fmt.Print(otp)
 			return LoginResponse{Error: genericLoginFailureMsg}
 		}
 		createVerificationLink := func(sessCtx mongo.SessionContext) (i interface{}, err error) {
@@ -93,7 +105,7 @@ func (a *Auth) Login(input dto.LoginInput) (res LoginResponse) {
 			if err = AuthRpo.CreateUserProfile(userID, firstName, lastName); err != nil {
 				return
 			}
-			err = a.OldUserVerifySendEmail(response.User.Email, otp)
+			//err = a.OldUserVerifySendEmail(response.User.Email, otp)
 			return
 		}
 

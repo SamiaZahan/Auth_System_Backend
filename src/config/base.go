@@ -19,6 +19,7 @@ type Config struct {
 	CORSPermitted         string `required:"true"`
 	MicroAPIToken         string `required:"true"`
 	NumValidAccessKey     string `required:"true"`
+	JWTSignatureSecret    string `required:"true"`
 }
 
 func New() {

@@ -38,6 +38,7 @@ type UserProfileDoc struct {
 	LastName      string             `bson:"last_name"`
 	Gender        string             `bson:"gender"`
 	ProfilePicURI string             `bson:"profile_pic_uri"`
+	Address       string             `bson:"address"`
 	Created       time.Time          `bson:"created"`
 	Updated       time.Time          `bson:"updated"`
 }

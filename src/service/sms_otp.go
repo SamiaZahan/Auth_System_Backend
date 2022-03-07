@@ -65,7 +65,7 @@ func (s *SmsOtp) MobileVerificationOtp(input dto.SendSmsOtpInput) (err error) {
 	var u *repository.UserDoc
 
 	// We need to verify all the mobile numbers from the beginning,
-	// so, we're no need to check from the legacy system.
+	// so, no need to check from the legacy system.
 	//
 	//userExistResponse := ExistingMobile(input.Mobile)
 	//if userExistResponse.Error {

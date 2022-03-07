@@ -30,15 +30,13 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 		return c.JSON(response.Payload{Message: "An Email has been send to your mail. Please Verify", Data: fiber.Map{"code": ""}})
 	}
 	if res.Redirect {
-		return c.JSON(response.Payload{Message: "DONE", Data: fiber.Map{"code": res.Code}})
+		return c.JSON(response.Payload{Message: "DONE", Data: fiber.Map{"code": res.Code, "token": res.Token}})
 	}
-
 	if res.Error != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Payload{
 			Message: res.Error.Error(),
 			Errors:  err,
 		})
 	}
-
 	return nil
 }

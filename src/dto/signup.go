@@ -18,8 +18,5 @@ func (input SignupInput) Validate() error {
 		validation.Field(&input.LastName, validation.Required),
 		validation.Field(&input.Email, validation.Required, is.Email),
 		validation.Field(&input.Password, validation.Length(8, 20)),
-		//Match(regexp.
-		//MustCompile("^(?=.*[0-9])(?=.*[A-Za-z]).{8,20}$")).
-		//Error("Password must have minimum eight characters, at least one letter and one number")),
 	)
 }

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"github.com/emamulandalib/airbringr-auth/dto"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -159,8 +160,24 @@ func (a *Auth) SetUserPasswordByEmail(email string, password string) (err error)
 	col := DB.Collection(UserCollection)
 	_, err = col.UpdateOne(
 		a.Ctx,
-		bson.M{"email": bson.M{"$eq": email}},
+		bson.M{"user_id": bson.M{"$eq": email}},
 		bson.M{"$set": bson.M{"password": password}},
+	)
+	return
+}
+
+func (a *Auth) SetUserProfileByID(ID string, updatedData *dto.EditProfileInput) (err error) {
+	UserID, _ := primitive.ObjectIDFromHex(ID)
+	col := DB.Collection(UserProfileCollection)
+	_, err = col.UpdateOne(
+		a.Ctx,
+		bson.M{"user_id": bson.M{"$eq": UserID}},
+		bson.M{"$set": bson.M{
+			"first_name": updatedData.FirstName,
+			"last_name":  updatedData.LastName,
+			"gender":     updatedData.Gender,
+			"address":    updatedData.Address,
+		}},
 	)
 	return
 }
