@@ -160,8 +160,17 @@ func (a *Auth) SetUserPasswordByEmail(email string, password string) (err error)
 	col := DB.Collection(UserCollection)
 	_, err = col.UpdateOne(
 		a.Ctx,
-		bson.M{"user_id": bson.M{"$eq": email}},
+		bson.M{"email": bson.M{"$eq": email}},
 		bson.M{"$set": bson.M{"password": password}},
+	)
+	return
+}
+func (a *Auth) SetUserEmailByEmail(newEmail string, oldEmail string) (err error) {
+	col := DB.Collection(UserCollection)
+	_, err = col.UpdateOne(
+		a.Ctx,
+		bson.M{"email": bson.M{"$eq": oldEmail}},
+		bson.M{"$set": bson.M{"email": newEmail}},
 	)
 	return
 }
@@ -176,7 +185,14 @@ func (a *Auth) SetUserProfileByID(ID string, updatedData *dto.EditProfileInput) 
 			"first_name": updatedData.FirstName,
 			"last_name":  updatedData.LastName,
 			"gender":     updatedData.Gender,
-			"address":    updatedData.Address,
+			"address": bson.M{
+				"division": updatedData.Address.Division,
+				"district": updatedData.Address.District,
+				"area":     updatedData.Address.Area,
+				"text":     updatedData.Address.Text,
+				"zone":     updatedData.Address.Zone,
+			},
+			"age": updatedData.Age,
 		}},
 	)
 	return

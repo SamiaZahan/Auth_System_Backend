@@ -9,8 +9,8 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-func (h *Handler) EditProfile(c *fiber.Ctx) (err error) {
-	input := new(dto.EditProfileInput)
+func (h *Handler) EditMobile(c *fiber.Ctx) (err error) {
+	input := new(dto.EditMobileInput)
 	if err = c.BodyParser(input); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Payload{
 			Message: response.BodyParseFailedErrorMsg,
@@ -29,14 +29,14 @@ func (h *Handler) EditProfile(c *fiber.Ctx) (err error) {
 	email := claims["email"].(string)
 
 	svc := service.EditProfile{}
-	if err := svc.EditUserProfile(input, email); err != nil {
+	if err := svc.EditUserMobile(input, email); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Payload{
 			Message: err.Error(),
 			Errors:  err,
 		})
 	}
 	return c.JSON(response.Payload{
-		Message: "Profile Updated Successfully",
+		Message: "Mobile Number Updated Successfully",
 	})
 
 }

@@ -37,10 +37,18 @@ type UserProfileDoc struct {
 	FirstName     string             `bson:"first_name"`
 	LastName      string             `bson:"last_name"`
 	Gender        string             `bson:"gender"`
+	Age           string             `bson:"age"`
 	ProfilePicURI string             `bson:"profile_pic_uri"`
-	Address       string             `bson:"address"`
+	Address       Address            `bson:"address"`
 	Created       time.Time          `bson:"created"`
 	Updated       time.Time          `bson:"updated"`
+}
+type Address struct {
+	Division string `json:"division"`
+	District string `json:"district"`
+	Area     string `json:"area"`
+	Text     string `json:"text"`
+	Zone     string `json:"zone"`
 }
 
 type VerificationDoc struct {

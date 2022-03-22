@@ -28,6 +28,7 @@ type VerifyMobileInput struct {
 	Auth   string `json:"auth"`
 	Mobile string `json:"mobile"`
 	OTP    int    `json:"otp"`
+	State  string `json:"state"`
 }
 
 func (input VerifyMobileInput) Validate() error {

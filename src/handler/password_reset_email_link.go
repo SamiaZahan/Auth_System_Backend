@@ -10,23 +10,19 @@ import (
 
 func (h *Handler) PasswordResetEmailLink(c *fiber.Ctx) error {
 	input := new(dto.EmailOtpInput)
-
 	if err := c.BodyParser(input); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Payload{
 			Message: response.BodyParseFailedErrorMsg,
 			Errors:  errors.New(response.BodyParseFailedErrorMsg),
 		})
 	}
-
 	err := input.Validate()
-
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Payload{
 			Message: response.ValidationFailedMsg,
 			Errors:  err,
 		})
 	}
-
 	svc := service.PassReset{}
 	err = svc.PasswordResetOtp(input)
 

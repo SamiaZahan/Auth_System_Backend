@@ -6,6 +6,7 @@ import (
 	"github.com/emamulandalib/airbringr-auth/response"
 	"github.com/emamulandalib/airbringr-auth/service"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 func (h *Handler) VerifyPassword(c *fiber.Ctx) (err error) {
@@ -23,14 +24,17 @@ func (h *Handler) VerifyPassword(c *fiber.Ctx) (err error) {
 		})
 	}
 
-	token := c.Get("Authorization", "")
-	ExtractJwtClaims := service.ExtractJwtClaims{}
-	claims, ok := ExtractJwtClaims.ExtractClaims(token)
-	if !ok {
-		return c.JSON(response.Payload{
-			Message: "Something  Wrong",
-		})
-	}
+	//token := c.Get("Authorization", "")
+	//ExtractJwtClaims := service.ExtractJwtClaims{}
+	//claims, ok := ExtractJwtClaims.ExtractClaims(token)
+	//if !ok {
+	//	return c.JSON(response.Payload{
+	//		Message: "Something  Wrong",
+	//	})
+	//}
+	//email := claims["email"].(string)
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
 	email := claims["email"].(string)
 
 	svc := service.VerifyUserPassword{}
