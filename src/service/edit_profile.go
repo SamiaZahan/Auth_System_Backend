@@ -16,41 +16,59 @@ import (
 type EditProfile struct{}
 
 func (ep EditProfile) EditUserProfile(input *dto.EditProfileInput, email string) (err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
-	//genericEditFailureMsg := errors.New("Profile Edit failed for some technical reason.")
-
+	genericEditFailureMsg := errors.New("profile Edit failed for some technical reason")
 	aRepo := repository.Auth{Ctx: ctx}
 	user, err := aRepo.GetUserByEmail(email)
 	if err != nil {
 		return errors.New("user not found")
 	}
-	err = aRepo.SetUserProfileByID(user.ID.Hex(), input)
-	if err != nil {
-		log.Error(err.Error())
-		return err
+	cb := func(sessCtx mongo.SessionContext) (i interface{}, err error) {
+		aRepo := repository.Auth{Ctx: sessCtx}
+		if err = aRepo.SetUserProfileByID(user.ID.Hex(), input); err != nil {
+			log.Error(err)
+			return err, nil
+		}
+
+		if code, body, errs := fiber.
+			Post(fmt.Sprintf("%s/helper/edit-profile", config.Params.AirBringrDomain)).
+			JSON(fiber.Map{
+				"email": email,
+				"data":  input,
+			}).
+			String(); code != fiber.StatusOK {
+			log.Error(body)
+			log.Error(errs)
+			return nil, genericEditFailureMsg
+		}
+		return
 	}
 
-	if err != nil && mongo.ErrNoDocuments != err {
-		log.Error(err)
-		return errors.New("user not found")
+	ctx = context.Background()
+	var sess mongo.Session
+	if sess, err = repository.MongoClient.StartSession(); err != nil {
+		return genericEditFailureMsg
+	}
+	defer sess.EndSession(ctx)
+	if _, err = sess.WithTransaction(ctx, cb); err != nil {
+		log.Error(err.Error())
+		return genericEditFailureMsg
 	}
 	return nil
-
 }
 func (ep EditProfile) EditEmailOtp(input *dto.EditEmailInput, email string) (err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 	genericEmailEditFailureMsg := errors.New("email update failed for some technical reason")
 	aRepo := repository.Auth{Ctx: ctx}
-	user, err := aRepo.GetUserByEmail(email)
-	fmt.Printf(user.Email)
-	if err != nil {
-		return errors.New("user not found")
+	user, _ := aRepo.GetUserByEmail(input.Email)
+	if user != nil {
+		return errors.New("an user with this email already exists")
 	}
-	if err != nil && mongo.ErrNoDocuments != err {
-		log.Error(err)
-		return errors.New("error while finding user")
+	userExistResponse := ExistingEmail(input.Email)
+	if userExistResponse.Status {
+		return errors.New("an user with this email already exists")
 	}
 	var otp string
 	otpSvc := OtpSvc{MicroAPIToken: config.Params.MicroAPIToken}
@@ -82,7 +100,7 @@ func (ep EditProfile) EditSendEmail(email string, otp string) error {
 		}).
 		String(); code != fiber.StatusOK {
 		log.Error(errs)
-		return errors.New("email send failed")
+		//return errors.New("email send failed")
 	}
 	return nil
 }

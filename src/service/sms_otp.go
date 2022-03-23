@@ -81,17 +81,6 @@ func (s *SmsOtp) MobileVerificationOtp(input dto.SendSmsOtpInput) (err error) {
 	mblNmbrExistMsg := errors.New("mobile number already taken")
 	var u *repository.UserDoc
 
-	// We need to verify all the mobile numbers from the beginning,
-	// so, no need to check from the legacy system.
-	//
-	//userExistResponse := ExistingMobile(input.Mobile)
-	//if userExistResponse.Error {
-	//	return errors.New("Error Occured")
-	//}
-	//if userExistResponse.Status {
-	//	return mblNmbrExistMsg
-	//---------------------------------------------------------
-
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 	aRepo := repository.Auth{Ctx: ctx}
@@ -136,46 +125,46 @@ func (s *SmsOtp) VerifyAndRegisterMobileNumber(input dto.VerifyMobileInput) (err
 			return
 		}
 
-		// register user into legacy system
-		//var userDoc *repository.UserDoc
-		//var userProfileDoc *repository.UserProfileDoc
-		//if userDoc, err = aRepo.GetUserByEmail(input.Auth); err != nil {
-		//	return
-		//}
-		//if userProfileDoc, err = aRepo.GetUserProfileByID(userDoc.ID.Hex()); err != nil {
-		//	return
-		//}
-		//
-		//if userDoc.ExistingUser {
-		//	code, _, errs := fiber.
-		//		Post(fmt.Sprintf("%s/helper/update-phone-number", config.Params.AirBringrDomain)).
-		//		JSON(fiber.Map{
-		//			"name":     fmt.Sprintf("%s %s", userProfileDoc.FirstName, userProfileDoc.LastName),
-		//			"email":    userDoc.Email,
-		//			"phone":    userDoc.Mobile,
-		//			"password": "*qSdn<<rha7eFb6<rPFF.!4=Nk%=6R",
-		//		}).
-		//		String()
-		//
-		//	if code != fiber.StatusOK || errs != nil {
-		//		return nil, errors.New("phone number update failed")
-		//	}
-		//	return
-		//}
-		//
-		//code, _, errs := fiber.
-		//	Post(fmt.Sprintf("%s/helper/register-v2", config.Params.AirBringrDomain)).
-		//	JSON(fiber.Map{
-		//		"name":     fmt.Sprintf("%s %s", userProfileDoc.FirstName, userProfileDoc.LastName),
-		//		"email":    userDoc.Email,
-		//		"phone":    userDoc.Mobile,
-		//		"password": "Vi$FV/kBi<VuZCW2Y9JT_G(NbUj~rV",
-		//	}).
-		//	String()
-		//
-		//if code != fiber.StatusOK || errs != nil {
-		//	return nil, errors.New("user registration failed")
-		//}
+		//register user into legacy system
+		var userDoc *repository.UserDoc
+		var userProfileDoc *repository.UserProfileDoc
+		if userDoc, err = aRepo.GetUserByEmail(input.Auth); err != nil {
+			return
+		}
+		if userProfileDoc, err = aRepo.GetUserProfileByID(userDoc.ID.Hex()); err != nil {
+			return
+		}
+
+		if userDoc.ExistingUser {
+			code, _, errs := fiber.
+				Post(fmt.Sprintf("%s/helper/update-phone-number", config.Params.AirBringrDomain)).
+				JSON(fiber.Map{
+					"name":     fmt.Sprintf("%s %s", userProfileDoc.FirstName, userProfileDoc.LastName),
+					"email":    userDoc.Email,
+					"phone":    userDoc.Mobile,
+					"password": "*qSdn<<rha7eFb6<rPFF.!4=Nk%=6R",
+				}).
+				String()
+
+			if code != fiber.StatusOK || errs != nil {
+				return nil, errors.New("phone number update failed")
+			}
+			return
+		}
+
+		code, _, errs := fiber.
+			Post(fmt.Sprintf("%s/helper/register-v2", config.Params.AirBringrDomain)).
+			JSON(fiber.Map{
+				"name":     fmt.Sprintf("%s %s", userProfileDoc.FirstName, userProfileDoc.LastName),
+				"email":    userDoc.Email,
+				"phone":    userDoc.Mobile,
+				"password": "Vi$FV/kBi<VuZCW2Y9JT_G(NbUj~rV",
+			}).
+			String()
+
+		if code != fiber.StatusOK || errs != nil {
+			return nil, errors.New("user registration failed")
+		}
 		return
 	}
 
@@ -187,7 +176,7 @@ func (s *SmsOtp) VerifyAndRegisterMobileNumber(input dto.VerifyMobileInput) (err
 	defer sess.EndSession(ctx)
 	if _, err = sess.WithTransaction(ctx, cb); err != nil {
 		log.Error(err.Error())
-		return genericFailureMsg
+		return err
 	}
 	return
 }

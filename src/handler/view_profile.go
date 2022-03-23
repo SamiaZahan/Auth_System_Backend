@@ -10,6 +10,7 @@ import (
 )
 
 func (h *Handler) ViewProfile(c *fiber.Ctx) error {
+
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	email := claims["email"].(string)

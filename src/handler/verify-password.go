@@ -23,16 +23,6 @@ func (h *Handler) VerifyPassword(c *fiber.Ctx) (err error) {
 			Errors:  err,
 		})
 	}
-
-	//token := c.Get("Authorization", "")
-	//ExtractJwtClaims := service.ExtractJwtClaims{}
-	//claims, ok := ExtractJwtClaims.ExtractClaims(token)
-	//if !ok {
-	//	return c.JSON(response.Payload{
-	//		Message: "Something  Wrong",
-	//	})
-	//}
-	//email := claims["email"].(string)
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	email := claims["email"].(string)
