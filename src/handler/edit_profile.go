@@ -29,7 +29,7 @@ func (h *Handler) EditProfile(c *fiber.Ctx) (err error) {
 	email := claims["email"].(string)
 
 	svc := service.EditProfile{}
-	if err := svc.EditUserProfile(input, email); err != nil {
+	if err := svc.EditUserProfile(input, email, c); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Payload{
 			Message: err.Error(),
 			Errors:  err,

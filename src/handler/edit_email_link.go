@@ -6,7 +6,6 @@ import (
 	"github.com/emamulandalib/airbringr-auth/response"
 	"github.com/emamulandalib/airbringr-auth/service"
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v4"
 )
 
 func (h *Handler) EditEmailReq(c *fiber.Ctx) (err error) {
@@ -24,12 +23,8 @@ func (h *Handler) EditEmailReq(c *fiber.Ctx) (err error) {
 		})
 	}
 
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	email := claims["email"].(string)
-
 	svc := service.EditProfile{}
-	if err := svc.EditEmailOtp(input, email); err != nil {
+	if err := svc.EditEmailOtp(input, c); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Payload{
 			Message: err.Error(),
 			Errors:  err,

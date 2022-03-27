@@ -26,7 +26,7 @@ func (h *Handler) MobileVerificationOTP(c *fiber.Ctx) (err error) {
 	}
 
 	svc := service.SmsOtp{}
-	if err = svc.MobileVerificationOtp(*input); err != nil {
+	if err = svc.MobileVerificationOtp(*input, c); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Payload{
 			Message: err.Error(),
 			Errors:  err,
@@ -64,7 +64,7 @@ func (h *Handler) VerifyMobile(c *fiber.Ctx) (err error) {
 	}
 
 	svc := service.SmsOtp{}
-	if err = svc.VerifyAndRegisterMobileNumber(*input); err != nil {
+	if err = svc.VerifyAndRegisterMobileNumber(*input, c); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Payload{
 			Message: err.Error(),
 			Errors:  err,

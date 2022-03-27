@@ -59,29 +59,12 @@ func (s *SmsOtp) SendSmsOtp(input dto.SendSmsOtpInput) (err error) {
 	return
 }
 
-//func (s *SmsOtp) EditMobileOtpSend(input dto.SendSmsOtpInput, email string) (err error) {
-//	genericFailureMsg := errors.New("OTP send failed")
-//	mblNmbrExistMsg := errors.New("mobile number already taken")
-//	var u *repository.UserDoc
-//	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
-//	defer cancel()
-//	aRepo := repository.Auth{Ctx: ctx}
-//	if u, err = aRepo.GetUserByMobile(input.Mobile); err != nil && err != mongo.ErrNoDocuments {
-//		return genericFailureMsg
-//	}
-//	if u != nil {
-//		return mblNmbrExistMsg
-//	}
-//	err = s.Send(input.Mobile)
-//	return
-//}
-
-func (s *SmsOtp) MobileVerificationOtp(input dto.SendSmsOtpInput) (err error) {
+func (s *SmsOtp) MobileVerificationOtp(input dto.SendSmsOtpInput, c *fiber.Ctx) (err error) {
 	genericFailureMsg := errors.New("OTP send failed")
 	mblNmbrExistMsg := errors.New("mobile number already taken")
 	var u *repository.UserDoc
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	ctx, cancel := context.WithTimeout(c.Context(), time.Second*2)
 	defer cancel()
 	aRepo := repository.Auth{Ctx: ctx}
 	if u, err = aRepo.GetUserByMobile(input.Mobile); err != nil && err != mongo.ErrNoDocuments {
@@ -107,7 +90,7 @@ func (s *SmsOtp) Verify(input dto.VerifyOtpInput) (err error) {
 	return
 }
 
-func (s *SmsOtp) VerifyAndRegisterMobileNumber(input dto.VerifyMobileInput) (err error) {
+func (s *SmsOtp) VerifyAndRegisterMobileNumber(input dto.VerifyMobileInput, c *fiber.Ctx) (err error) {
 	genericFailureMsg := errors.New("mobile verification failed")
 	otpSvc := OtpSvc{MicroAPIToken: config.Params.MicroAPIToken}
 	isValid := otpSvc.Validate(OtpValidateRequest{
@@ -168,7 +151,7 @@ func (s *SmsOtp) VerifyAndRegisterMobileNumber(input dto.VerifyMobileInput) (err
 		return
 	}
 
-	ctx := context.Background()
+	ctx := c.Context()
 	var sess mongo.Session
 	if sess, err = repository.MongoClient.StartSession(); err != nil {
 		return genericFailureMsg

@@ -28,7 +28,7 @@ func (h *Handler) Signup(c *fiber.Ctx) error {
 	}
 
 	svc := service.Auth{}
-	err = svc.Signup(*input)
+	err = svc.Signup(*input, c)
 
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(response.Payload{

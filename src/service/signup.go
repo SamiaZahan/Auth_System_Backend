@@ -1,7 +1,6 @@
 package service
 
 import (
-	"context"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"time"
@@ -14,9 +13,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func (a *Auth) Signup(input dto.SignupInput) (err error) {
+func (a *Auth) Signup(input dto.SignupInput, c *fiber.Ctx) (err error) {
 	genericSignupFailureMsg := errors.New("Signup failed for some technical reason.")
-	ctx := context.Background()
+	ctx := c.Context()
 	authRepo := repository.Auth{Ctx: ctx}
 	passwordService := PasswordService{}
 

@@ -1,18 +1,15 @@
 package service
 
 import (
-	"context"
 	"errors"
 	"github.com/emamulandalib/airbringr-auth/repository"
+	"github.com/gofiber/fiber/v2"
 )
 
 type VerifyUserPassword struct{}
 
-func (v VerifyUserPassword) VerifyPassword(password string, email string) (err error) {
-	//ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
-	//defer cancel()
-	ctx := context.Background()
-	//genericEditFailureMsg := errors.New("Profile Edit failed for some technical reason.")
+func (v VerifyUserPassword) VerifyPassword(password string, email string, c *fiber.Ctx) (err error) {
+	ctx := c.Context()
 	aRepo := repository.Auth{Ctx: ctx}
 	passwordService := PasswordService{}
 	user, err := aRepo.GetUserByEmail(email)

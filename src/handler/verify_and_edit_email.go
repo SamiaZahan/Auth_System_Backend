@@ -33,7 +33,7 @@ func (h *Handler) VerifyAndEditEmail(c *fiber.Ctx) (err error) {
 	email := claims["email"].(string)
 
 	auth := service.Auth{}
-	if err = auth.VerifyAndEditEmail(*input, email); err != nil {
+	if err = auth.VerifyAndEditEmail(*input, email, c); err != nil {
 		return c.
 			Status(fiber.StatusBadRequest).
 			JSON(response.Payload{

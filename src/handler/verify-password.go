@@ -28,7 +28,7 @@ func (h *Handler) VerifyPassword(c *fiber.Ctx) (err error) {
 	email := claims["email"].(string)
 
 	svc := service.VerifyUserPassword{}
-	if err = svc.VerifyPassword(input.Password, email); err != nil {
+	if err = svc.VerifyPassword(input.Password, email, c); err != nil {
 		return c.JSON(response.Payload{
 			Message: err.Error(),
 			Errors:  err,

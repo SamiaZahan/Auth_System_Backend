@@ -1,7 +1,6 @@
 package service
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"github.com/emamulandalib/airbringr-auth/config"
@@ -13,9 +12,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func (a *Auth) VerifyAndEditEmail(input dto.EmailVerificationInput, email string) (err error) {
+func (a *Auth) VerifyAndEditEmail(input dto.EmailVerificationInput, email string, c *fiber.Ctx) (err error) {
 	genericErrMsg := errors.New("something went wrong with the verification. Please try again later")
-	ctx := context.Background()
+	ctx := c.Context()
 	otpSvc := otp.NewOtpService(config.Params.MicroAPIToken)
 	resp, err := otpSvc.Validate(&otp.ValidateRequest{
 		Code: fmt.Sprintf("%d", input.OTP),
