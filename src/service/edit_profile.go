@@ -78,7 +78,6 @@ func (ep EditProfile) EditEmailOtp(input *dto.EditEmailInput, c *fiber.Ctx) (err
 	}
 	err = ep.EditSendEmail(input.Email, otp)
 	return
-	return nil
 }
 
 func (ep EditProfile) EditSendEmail(email string, otp string) error {
@@ -98,7 +97,7 @@ func (ep EditProfile) EditSendEmail(email string, otp string) error {
 		}).
 		String(); code != fiber.StatusOK {
 		log.Error(errs)
-		//return errors.New("email send failed")
+		return errors.New("email send failed")
 	}
 	return nil
 }
