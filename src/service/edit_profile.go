@@ -44,7 +44,6 @@ func (ep EditProfile) EditUserProfile(input *dto.EditProfileInput, email string,
 		}
 		return
 	}
-
 	var sess mongo.Session
 	if sess, err = repository.MongoClient.StartSession(); err != nil {
 		return genericEditFailureMsg
@@ -78,6 +77,7 @@ func (ep EditProfile) EditEmailOtp(input *dto.EditEmailInput, c *fiber.Ctx) (err
 		return genericEmailEditFailureMsg
 	}
 	err = ep.EditSendEmail(input.Email, otp)
+	return
 	return nil
 }
 

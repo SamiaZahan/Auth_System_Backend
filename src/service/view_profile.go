@@ -11,7 +11,7 @@ import (
 type ViewProfile struct{}
 
 func (p ViewProfile) ViewUserProfile(email string, c *fiber.Ctx) (err error, res interface{}, address interface{}) {
-	var ctx, cancel = context.WithTimeout(c.Context(), 2*time.Second)
+	var ctx, cancel = context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	authRepo := repository.Auth{Ctx: ctx}
 	userDoc, err := authRepo.GetUserByEmail(email)
