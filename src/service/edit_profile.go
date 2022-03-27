@@ -15,8 +15,8 @@ import (
 
 type EditProfile struct{}
 
-func (ep EditProfile) EditUserProfile(input *dto.EditProfileInput, email string) (err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+func (ep EditProfile) EditUserProfile(input *dto.EditProfileInput, email string, c *fiber.Ctx) (err error) {
+	ctx, cancel := context.WithTimeout(c.Context(), time.Second*2)
 	defer cancel()
 	genericEditFailureMsg := errors.New("profile Edit failed for some technical reason")
 	aRepo := repository.Auth{Ctx: ctx}
@@ -45,7 +45,6 @@ func (ep EditProfile) EditUserProfile(input *dto.EditProfileInput, email string)
 		return
 	}
 
-	ctx = context.Background()
 	var sess mongo.Session
 	if sess, err = repository.MongoClient.StartSession(); err != nil {
 		return genericEditFailureMsg
@@ -57,8 +56,8 @@ func (ep EditProfile) EditUserProfile(input *dto.EditProfileInput, email string)
 	}
 	return nil
 }
-func (ep EditProfile) EditEmailOtp(input *dto.EditEmailInput, email string) (err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+func (ep EditProfile) EditEmailOtp(input *dto.EditEmailInput, c *fiber.Ctx) (err error) {
+	ctx, cancel := context.WithTimeout(c.Context(), time.Second*2)
 	defer cancel()
 	genericEmailEditFailureMsg := errors.New("email update failed for some technical reason")
 	aRepo := repository.Auth{Ctx: ctx}
@@ -73,13 +72,12 @@ func (ep EditProfile) EditEmailOtp(input *dto.EditEmailInput, email string) (err
 	var otp string
 	otpSvc := OtpSvc{MicroAPIToken: config.Params.MicroAPIToken}
 	if otp, err = otpSvc.Generate(OtpGenerateRequest{
-		Expiry: int64(time.Hour * 24),
+		Expiry: int64(time.Hour * 6),
 		Id:     input.Email,
 	}); err != nil {
 		return genericEmailEditFailureMsg
 	}
 	err = ep.EditSendEmail(input.Email, otp)
-	return
 	return nil
 }
 
@@ -139,20 +137,4 @@ func (ep *EditProfile) EditUserEmail(input *dto.EditEmailInput, email string) (e
 		return genericFailureMsg
 	}
 	return
-}
-
-func (ep EditProfile) EditUserMobile(input *dto.EditMobileInput, email string) (err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
-	defer cancel()
-	aRepo := repository.Auth{Ctx: ctx}
-	user, err := aRepo.GetUserByEmail(email)
-	fmt.Printf(user.Email)
-	if err != nil {
-		return errors.New("user not found")
-	}
-	if err != nil && mongo.ErrNoDocuments != err {
-		log.Error(err)
-		return errors.New("user not found")
-	}
-	return nil
 }
