@@ -23,7 +23,7 @@ func (app *App) Bootstrap() {
 	ctx := context.Background()
 	authRepo := repository.Auth{Ctx: ctx}
 	if err := authRepo.CreateUserIndex(); err != nil {
-		log.Fatal(err.Error())
+		log.Error(err.Error())
 	}
 
 	app.RedisStorage()
