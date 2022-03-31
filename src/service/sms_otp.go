@@ -135,7 +135,7 @@ func (s *SmsOtp) VerifyAndRegisterMobileNumber(input dto.VerifyMobileInput, c *f
 			return
 		}
 
-		code, _, errs := fiber.
+		code, body, errs := fiber.
 			Post(fmt.Sprintf("%s/helper/register-v2", config.Params.AirBringrDomain)).
 			JSON(fiber.Map{
 				"name":     fmt.Sprintf("%s %s", userProfileDoc.FirstName, userProfileDoc.LastName),
@@ -146,6 +146,8 @@ func (s *SmsOtp) VerifyAndRegisterMobileNumber(input dto.VerifyMobileInput, c *f
 			String()
 
 		if code != fiber.StatusOK || errs != nil {
+			log.Error(errs)
+			log.Error(body)
 			return nil, errors.New("user registration failed")
 		}
 		return
