@@ -15,3 +15,5 @@ services:
                 awslogs-group: airbringr-auth
                 awslogs-create-group: "true"
                 awslogs-multiline-pattern: '^time='
+
+

@@ -28,6 +28,7 @@ func (a *Auth) VerifyAndEditEmail(input dto.EmailVerificationInput, email string
 		log.Error(errors.New("OTP verification not success from M30"))
 		return genericErrMsg
 	}
+	//TODO: new email existence check in mongo db and legacy system
 
 	cb := func(sessCtx mongo.SessionContext) (i interface{}, err error) {
 		aRepo := repository.Auth{Ctx: sessCtx}
